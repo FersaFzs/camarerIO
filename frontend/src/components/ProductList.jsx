@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { getProducts } from '../services/roundService'; // Usamos roundService por ahora
+import { getProducts, createProduct } from '../services/roundService';
 
 function ProductList({ onAddProducts, onCancel }) {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedProducts, setSelectedProducts] = useState({}); // { productId: quantity, ... }
+  const [selectedProducts, setSelectedProducts] = useState({});
+  const [showCustomProductModal, setShowCustomProductModal] = useState(false);
+  const [customProduct, setCustomProduct] = useState({ name: '', price: '' });
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -21,43 +23,60 @@ function ProductList({ onAddProducts, onCancel }) {
     };
 
     loadProducts();
-  }, []); // El array vacío asegura que se ejecuta solo una vez al montar el componente
+  }, []);
 
   const handleQuantityChange = (productId, change) => {
     setSelectedProducts(prev => {
-      const currentQuantity = prev[productId] || 0
-      const newQuantity = Math.max(0, currentQuantity + change)
+      const currentQuantity = prev[productId] || 0;
+      const newQuantity = Math.max(0, currentQuantity + change);
       
       if (newQuantity === 0) {
-        const { [productId]: _, ...rest } = prev
-        return rest
+        const { [productId]: _, ...rest } = prev;
+        return rest;
       }
       
       return {
         ...prev,
         [productId]: newQuantity
-      }
-    })
-  }
+      };
+    });
+  };
 
   const handleAddToRound = () => {
     const productsToAdd = Object.entries(selectedProducts).map(([productId, quantity]) => ({
       product: productId,
       quantity
-    }))
+    }));
     
     if (productsToAdd.length > 0) {
-      onAddProducts(productsToAdd)
-      setSelectedProducts({}) // Resetear selección después de añadir
+      onAddProducts(productsToAdd);
+      setSelectedProducts({});
     }
-  }
+  };
 
   const getTotalPrice = () => {
     return Object.entries(selectedProducts).reduce((total, [productId, quantity]) => {
-      const product = products.find(p => p._id === productId)
-      return total + (product ? product.price * quantity : 0)
-    }, 0)
-  }
+      const product = products.find(p => p._id === productId);
+      return total + (product ? product.price * quantity : 0);
+    }, 0);
+  };
+
+  const handleCustomProductSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const newProduct = await createProduct({
+        name: customProduct.name,
+        price: parseFloat(customProduct.price)
+      });
+      
+      setProducts(prev => [...prev, newProduct]);
+      setShowCustomProductModal(false);
+      setCustomProduct({ name: '', price: '' });
+    } catch (err) {
+      console.error('Error al crear producto personalizado:', err);
+      setError('Error al crear el producto personalizado');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -141,6 +160,19 @@ function ProductList({ onAddProducts, onCancel }) {
                   </div>
                 </div>
               ))}
+
+              {/* Botón de Producto Comodín */}
+              <div
+                onClick={() => setShowCustomProductModal(true)}
+                className="bg-white rounded-xl shadow-sm border-2 border-dashed border-blue-300 overflow-hidden cursor-pointer hover:border-blue-500 transition-colors"
+              >
+                <div className="flex h-32 items-center justify-center">
+                  <div className="text-center">
+                    <span className="text-4xl text-blue-500">+</span>
+                    <p className="mt-2 text-lg text-blue-600 font-medium">Producto Personalizado</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -166,6 +198,60 @@ function ProductList({ onAddProducts, onCancel }) {
           </div>
         </div>
       </div>
+
+      {/* Modal de Producto Personalizado */}
+      {showCustomProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Crear Producto Personalizado</h2>
+            <form onSubmit={handleCustomProductSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+                  Nombre del Producto
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={customProduct.name}
+                  onChange={(e) => setCustomProduct(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price">
+                  Precio
+                </label>
+                <input
+                  type="number"
+                  id="price"
+                  step="0.01"
+                  min="0"
+                  value={customProduct.price}
+                  onChange={(e) => setCustomProduct(prev => ({ ...prev, price: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomProductModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Crear Producto
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

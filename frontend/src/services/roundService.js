@@ -140,4 +140,25 @@ export const updateRoundProducts = async (roundId, products) => {
     console.error('Error al actualizar productos de la ronda:', error)
     throw error
   }
-} 
+}
+
+export const createProduct = async (productData) => {
+  try {
+    const response = await fetch(`${API_URL}/products`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(productData),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Error al crear el producto');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error en createProduct:', error);
+    throw error;
+  }
+}; 
