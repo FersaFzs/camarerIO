@@ -61,7 +61,7 @@ const Accounting = () => {
     try {
       setIsResetting(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/accounting/reset-daily', {
+      const response = await fetch('https://camarerio.onrender.com/api/accounting/reset-daily', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
