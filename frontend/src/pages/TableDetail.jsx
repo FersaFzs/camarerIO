@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, markAllRoundsAsPaid, updateRoundProducts } from '../services/roundService'
+import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, markAllRoundsAsPaid, updateRoundProducts, confirmTableService, generateTicket } from '../services/roundService'
 import ProductList from '../components/ProductList'
+import '../mesas-modern.css'
+import TicketView from '../components/TicketView'
 
 function TableDetail() {
   const { tableNumber } = useParams()
@@ -17,6 +19,11 @@ function TableDetail() {
   const [showSelectivePayment, setShowSelectivePayment] = useState(false)
   const [selectedProducts, setSelectedProducts] = useState([])
   const [error, setError] = useState(null)
+  const [pendingProducts, setPendingProducts] = useState([])
+  const [serviceConfirmationPending, setServiceConfirmationPending] = useState(false)
+  const [showTicketModal, setShowTicketModal] = useState(false)
+  const [currentTicket, setCurrentTicket] = useState(null)
+  const [showTicketConfirm, setShowTicketConfirm] = useState(false)
 
   console.log('TableDetail - Número de mesa:', tableNumber)
 
@@ -52,20 +59,24 @@ function TableDetail() {
 
   const handleProductsSelected = async (products) => {
     try {
-      if (isNewRound || !currentRound) {
-        // Crear nueva ronda
-        const newRound = await createRound(tableNumber, products)
-        await loadTableRounds() // Recargar todas las rondas y el total
-      } else {
-        // Añadir productos a la ronda existente
-        await addProductsToRound(currentRound._id, products)
-        await loadTableRounds() // Recargar todas las rondas y el total
-      }
+      await createRound(tableNumber, products)
+      await loadTableRounds()
       setShowProductList(false)
       setIsNewRound(false)
     } catch (err) {
       console.error('Error al añadir productos:', err)
       setError('Error al añadir productos')
+    }
+  }
+
+  const handleConfirmService = async () => {
+    try {
+      // Confirmar el servicio (pasar a occupied)
+      await confirmTableService(tableNumber)
+      await loadTableRounds()
+    } catch (err) {
+      console.error('Error al confirmar servicio:', err)
+      setError('Error al confirmar servicio')
     }
   }
 
@@ -76,14 +87,21 @@ function TableDetail() {
 
   const handleConfirmPayment = async () => {
     try {
+      let roundIds = []
       if (selectedRoundForPayment) {
-        // Pagar una ronda específica
         await markRoundAsPaid(selectedRoundForPayment._id)
+        roundIds = [selectedRoundForPayment._id]
       } else {
-        // Pagar todas las rondas
         await markAllRoundsAsPaid(tableNumber)
+        roundIds = rounds.map(round => round._id)
       }
-      await loadTableRounds() // Recargar todas las rondas y el total
+
+      // Guardar los datos para el ticket pero no mostrarlo aún
+      const ticket = await generateTicket(tableNumber, roundIds)
+      setCurrentTicket(ticket)
+      setShowTicketConfirm(true)
+      
+      await loadTableRounds()
       setShowPaymentModal(false)
       setSelectedRoundForPayment(null)
     } catch (err) {
@@ -153,6 +171,11 @@ function TableDetail() {
       const newRound = await createRound(tableNumber, products)
       await markRoundAsPaid(newRound._id)
 
+      // Generar el ticket para esta ronda
+      const ticket = await generateTicket(tableNumber, [newRound._id])
+      setCurrentTicket(ticket)
+      setShowTicketModal(true)
+
       // Eliminar los productos pagados de sus rondas originales
       for (const item of selectedProducts) {
         const round = rounds.find(r => r._id === item.roundId)
@@ -210,122 +233,114 @@ function TableDetail() {
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-50 flex flex-col">
-      {/* Header fijo */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg z-20">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-white">Mesa {tableNumber}</h1>
-            <button
-              onClick={() => navigate('/mesas')}
-              className="text-white hover:text-blue-100 transition-colors"
-            >
-              Volver a Mesas
-            </button>
-          </div>
+    <div className="min-h-screen w-full bg-neutral-50 font-inter flex flex-col items-center justify-start">
+      {/* Cabecera minimalista */}
+      <div className="w-full max-w-3xl mx-auto pt-8 pb-2 flex flex-col items-center">
+        <div className="w-full rounded-2xl bg-green-50 border border-green-100 shadow-sm flex justify-between items-center mb-8 px-6 py-5">
+          <button
+            onClick={() => navigate('/mesas')}
+            className="text-green-700 hover:bg-green-100 hover:text-green-900 text-base font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
+          >
+            ← Volver
+          </button>
+          <span className="text-2xl font-bold text-green-900 tracking-tight">Mesa {tableNumber}</span>
+          <span className="w-24" />
         </div>
       </div>
-
-      {/* Contenido principal con scroll */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 container mx-auto px-4 py-8 overflow-y-auto">
-          {rounds.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600 mb-6">No hay pedidos activos para esta mesa</p>
-              <button
-                onClick={handleAddRound}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Nueva Ronda
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Área de rondas con scroll */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-4">Rondas Activas</h2>
-                <div className="space-y-6">
-                  {rounds.map((round, roundIndex) => {
-                    const roundTotal = calculateRoundTotal(round)
-                    return (
-                      <div key={round._id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-semibold">Ronda {roundIndex + 1}</h3>
-                          <div className="flex items-center space-x-4">
-                            <span className="text-lg font-medium">
-                              ${roundTotal.toFixed(2)}
-                            </span>
-                            <button
-                              onClick={() => handlePayment(round)}
-                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                            >
-                              Pagar Ronda
-                            </button>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          {round.products.map((item, index) => (
-                            <div key={index} className="flex justify-between items-center p-2 bg-slate-50 rounded">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-gray-700">
-                                  {item.product?.name || 'Producto no disponible'}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                  x{item.quantity}
-                                </span>
-                              </div>
-                              <span className="font-medium text-gray-800">
-                                ${((item.product?.price || 0) * item.quantity).toFixed(2)}
-                              </span>
-                            </div>
-                          ))}
+      {/* Contenido principal */}
+      <div className="w-full max-w-3xl mx-auto px-2 pb-12 flex flex-col items-center">
+        {isLoading ? (
+          <div className="text-center text-neutral-400 py-12">Cargando...</div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-12">{error}</div>
+        ) : rounds.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-neutral-500 mb-6">No hay pedidos activos para esta mesa</p>
+            <button
+              onClick={handleAddRound}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg shadow-sm"
+            >
+              Nueva Ronda
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-8 w-full">
+            {/* Área de rondas */}
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <h2 className="text-xl font-semibold mb-4 text-neutral-900">Rondas Activas</h2>
+              <div className="space-y-6">
+                {rounds.map((round, roundIndex) => {
+                  const roundTotal = calculateRoundTotal(round)
+                  return (
+                    <div key={round._id} className="border border-neutral-200 rounded-xl p-4 bg-neutral-50">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-green-700">Ronda {roundIndex + 1}</h3>
+                        <div className="flex items-center space-x-4">
+                          <span className="text-lg font-bold text-neutral-900">
+                            ${roundTotal.toFixed(2)}
+                          </span>
+                          <button
+                            onClick={() => handlePayment(round)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
+                          >
+                            Pagar Ronda
+                          </button>
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
+                      <div className="space-y-2">
+                        {round.products.map((item, index) => (
+                          <div key={index} className="flex justify-between items-center p-2 bg-white rounded">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-neutral-800">
+                                {item.product?.name || 'Producto no disponible'}
+                              </span>
+                              <span className="text-sm text-neutral-400">
+                                x{item.quantity}
+                              </span>
+                            </div>
+                            <span className="font-medium text-neutral-900">
+                              ${((item.product?.price || 0) * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Footer fijo con total y botones */}
-        {rounds.length > 0 && (
-          <div className="bg-slate-50 border-t border-gray-200">
-            <div className="container mx-auto px-4 py-6">
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-xl font-semibold">Total de la cuenta:</span>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-2xl font-bold text-blue-600">
-                      ${total.toFixed(2)}
-                    </span>
-                    <button
-                      onClick={() => handlePayment()}
-                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Pagar Todo
-                    </button>
-                  </div>
+            {/* Total y acciones */}
+            <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col gap-6">
+              <div className="flex justify-between items-center">
+                <span className="text-xl font-semibold text-neutral-900">Total de la cuenta:</span>
+                <div className="flex items-center space-x-4">
+                  <span className="text-2xl font-bold text-green-700">
+                    ${total.toFixed(2)}
+                  </span>
+                  <button
+                    onClick={() => handlePayment()}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
+                  >
+                    Pagar Todo
+                  </button>
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-4">
+              <div className="flex flex-wrap justify-end gap-4">
                 <button
                   onClick={handleSelectivePayment}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="px-6 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold shadow-sm border border-green-200"
                 >
                   Cobro Selectivo
                 </button>
                 <button
                   onClick={handleAddRound}
-                  className="px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
                 >
                   Nueva Ronda
                 </button>
                 <button
                   onClick={handleAddProducts}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-6 py-3 bg-neutral-200 text-neutral-800 rounded-lg hover:bg-neutral-300 transition-colors font-semibold shadow-sm"
                 >
                   Añadir Productos
                 </button>
@@ -450,6 +465,41 @@ function TableDetail() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para generar ticket */}
+      {showTicketConfirm && currentTicket && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+            <h2 className="text-2xl font-bold mb-4 text-green-900">¿Generar ticket?</h2>
+            <p className="mb-6 text-green-700">¿Quieres imprimir el ticket para el cliente?</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => { setShowTicketConfirm(false); setShowTicketModal(true); }}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+              >
+                Generar Ticket
+              </button>
+              <button
+                onClick={() => { setShowTicketConfirm(false); setCurrentTicket(null); }}
+                className="px-6 py-3 bg-neutral-200 text-green-900 rounded-lg hover:bg-neutral-300 transition-colors font-semibold"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal del ticket */}
+      {showTicketModal && currentTicket && (
+        <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+          <TicketView
+            ticket={currentTicket}
+            onClose={() => setShowTicketModal(false)}
+            autoPrint={true}
+          />
         </div>
       )}
     </div>

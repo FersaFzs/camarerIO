@@ -1,16 +1,27 @@
 import express from 'express';
-import { getAllProducts, createProduct } from '../controllers/productController.js';
+import { getProducts, createProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
+import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
 // @route   GET /api/products
 // @desc    Get all products
-// @access  Public (for now, could be protected later)
-router.get('/', getAllProducts);
+// @access  Public
+router.get('/', getProducts);
 
 // @route   POST /api/products
 // @desc    Create a new product
-// @access  Public (for now)
-router.post('/', createProduct);
+// @access  Private (admin only)
+router.post('/', upload.single('image'), createProduct);
+
+// @route   PUT /api/products/:id
+// @desc    Update a product
+// @access  Private (admin only)
+router.put('/:id', upload.single('image'), updateProduct);
+
+// @route   DELETE /api/products/:id
+// @desc    Delete a product
+// @access  Private (admin only)
+router.delete('/:id', deleteProduct);
 
 export default router; 

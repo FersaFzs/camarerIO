@@ -1,0 +1,21 @@
+{
+  "short_name": "WaiterApp",
+  "name": "WaiterApp - Gestión de Mesas",
+  "icons": [
+    {
+      "src": "/assets/logo-apalanque.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/logo-apalanque.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f7fafc",
+  "theme_color": "#15803d",
+  "orientation": "portrait"
+} 

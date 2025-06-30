@@ -6,7 +6,8 @@ import {
   markRoundAsPaid,
   markAllRoundsAsPaid,
   getTableStatuses,
-  updateRoundProducts
+  updateRoundProducts,
+  confirmTableService
 } from '../controllers/roundController.js'
 
 const router = Router()
@@ -18,5 +19,6 @@ router.put('/:roundId/pay', markRoundAsPaid)
 router.put('/table/:tableNumber/pay-all', markAllRoundsAsPaid)
 router.get('/statuses', getTableStatuses)
 router.put('/:roundId', updateRoundProducts)
+router.put('/table/:tableNumber/confirm-service', confirmTableService)
 
 export default router 

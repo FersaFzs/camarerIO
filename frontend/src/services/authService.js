@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = 'http://localhost:5000/api'
+const API_URL = 'http://192.168.119.83:5000/api'
 
 // Configurar axios para incluir las credenciales
 axios.defaults.withCredentials = true
@@ -50,4 +50,17 @@ export const isAuthenticated = () => {
 export const checkAuth = () => {
   const token = localStorage.getItem('token')
   return !!token
+}
+
+export const createUser = async (userData) => {
+  try {
+    const response = await axios.post(`${API_URL}/auth/register`, userData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    return response.data.user
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Error al crear usuario')
+  }
 } 

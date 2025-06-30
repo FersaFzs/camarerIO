@@ -74,6 +74,7 @@ export const markRoundAsPaid = async (req, res) => {
     }
 
     round.isPaid = true
+    round.paidAt = new Date()
     await round.save()
     
     // Poblar los productos después de actualizar
@@ -92,7 +93,12 @@ export const markAllRoundsAsPaid = async (req, res) => {
     // Encontrar y marcar como pagadas todas las rondas no pagadas de la mesa
     const result = await Round.updateMany(
       { tableNumber, isPaid: false },
-      { $set: { isPaid: true } }
+      { 
+        $set: { 
+          isPaid: true,
+          paidAt: new Date()
+        }
+      }
     )
 
     if (result.modifiedCount === 0) {
@@ -108,17 +114,44 @@ export const markAllRoundsAsPaid = async (req, res) => {
 // Obtener el estado de ocupación de las mesas
 export const getTableStatuses = async (req, res) => {
   try {
-    // Encontrar todas las rondas no pagadas y agrupar por numero de mesa
-    const occupiedTables = await Round.aggregate([
-      { $match: { isPaid: false } },
-      { $group: { _id: '$tableNumber' } }
-    ]);
+    // Encontrar todas las rondas no pagadas
+    const rounds = await Round.find({ isPaid: false });
+    console.log('Rondas encontradas:', rounds);
+    
+    // Crear un mapa para almacenar el estado de cada mesa
+    const tableStatuses = new Map();
+    
+    // Procesar cada ronda
+    rounds.forEach(round => {
+      const tableNumber = round.tableNumber;
+      const tieneProductos = round.products && round.products.length > 0;
+      const isServiceConfirmed = round.isServiceConfirmed;
+      console.log(`Procesando mesa ${tableNumber}:`, {
+        tieneProductos,
+        productos: round.products,
+        isServiceConfirmed
+      });
+      
+      if (tieneProductos) {
+        if (isServiceConfirmed) {
+          tableStatuses.set(tableNumber, 'occupied');
+        } else {
+          tableStatuses.set(tableNumber, 'serving');
+        }
+      }
+      // Si no tiene productos, no se añade (mesa libre)
+    });
 
-    // Extraer solo los numeros de mesa
-    const occupiedTableNumbers = occupiedTables.map(item => item._id);
+    // Convertir el mapa a un array de objetos
+    const formattedStatuses = Array.from(tableStatuses.entries()).map(([tableNumber, status]) => ({
+      tableNumber,
+      status
+    }));
 
-    res.status(200).json(occupiedTableNumbers);
+    console.log('Estados finales:', formattedStatuses);
+    res.status(200).json(formattedStatuses);
   } catch (error) {
+    console.error('Error en getTableStatuses:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -145,4 +178,29 @@ export const updateRoundProducts = async (req, res) => {
     console.error('Error al actualizar productos de la ronda:', error)
     res.status(500).json({ message: 'Error al actualizar productos de la ronda' })
   }
-} 
+}
+
+// Confirmar el servicio de una mesa
+export const confirmTableService = async (req, res) => {
+  try {
+    const { tableNumber } = req.params;
+    
+    // Encontrar la ronda activa de la mesa
+    const round = await Round.findOne({ 
+      tableNumber, 
+      isPaid: false 
+    });
+
+    if (!round) {
+      return res.status(404).json({ message: 'No se encontró una ronda activa para esta mesa' });
+    }
+
+    // Marcar la ronda como ocupada (confirmar servicio)
+    round.isServiceConfirmed = true;
+    await round.save();
+
+    res.json({ message: 'Servicio confirmado correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 

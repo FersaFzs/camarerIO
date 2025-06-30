@@ -4,11 +4,12 @@ services:
   backend:
     build: ./backend
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - ./backend:/app
     environment:
       - NODE_ENV=development
+      - MONGODB_URI=mongodb://db:27017/waiterapp
     depends_on:
       - db
 
@@ -22,7 +23,12 @@ services:
     tty: true
 
   db:
-    image: nouchka/sqlite3
+    image: mongo:latest
+    ports:
+      - "27017:27017"
     volumes:
-      - ./backend/database.db:/root/db/database.db
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
 

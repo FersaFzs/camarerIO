@@ -29,6 +29,14 @@ const roundSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  paidAt: {
+    type: Date,
+    default: null
+  },
+  isServiceConfirmed: {
+    type: Boolean,
+    default: false
   }
 })
 

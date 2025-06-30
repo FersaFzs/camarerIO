@@ -146,4 +146,37 @@ export const createTestUser = async () => {
   } catch (error) {
     console.error('Error al crear usuarios de prueba:', error)
   }
-} 
+}
+
+// Crear usuario (solo admin)
+export const register = async (req, res) => {
+  try {
+    const { username, email, password, role, name } = req.body;
+    if (!username || !password || !name) {
+      return res.status(400).json({ message: 'Faltan campos obligatorios' });
+    }
+    // Comprobar si ya existe el usuario
+    const existing = await User.findOne({ username });
+    if (existing) {
+      return res.status(409).json({ message: 'El usuario ya existe' });
+    }
+    // Crear usuario
+    const user = new User({ username, email, password, role, name });
+    await user.save();
+    res.status(201).json({ message: 'Usuario creado correctamente', user: { username, email, role, name, _id: user._id } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Obtener todos los usuarios (solo admin)
+export const getUsers = async (req, res) => {
+  try {
+    // Opcional: comprobar si el usuario es admin (si tienes auth middleware)
+    // if (!req.user || req.user.role !== 'admin') return res.status(403).json({ message: 'No autorizado' });
+    const users = await User.find({}, '-password').sort({ username: 1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 

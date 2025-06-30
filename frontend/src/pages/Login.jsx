@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import logoApalanque from '../assets/logo-apalanque.png'
+import '../mesas-modern.css'
 
 function Login() {
   const [username, setUsername] = useState('')
@@ -33,62 +35,50 @@ function Login() {
   }
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-b from-blue-500 to-blue-600 flex items-center justify-center p-4">
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8">
-          <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">WaiterApp</h1>
-            <p className="text-gray-600 mt-2 text-sm sm:text-base">Inicia sesión para continuar</p>
+    <div className="min-h-screen w-full bg-neutral-50 flex items-center justify-center font-inter p-4">
+      <div className="w-full max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center">
+        <img src={logoApalanque} alt="Logo" className="h-32 mb-6 object-contain" style={{ maxWidth: 240 }} />
+        <p className="text-green-700 mb-6 text-base">Inicia sesión para continuar</p>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm w-full text-center">
+            {error}
           </div>
-          
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Usuario o Email
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-base"
-                placeholder="Usuario o email"
-                required
-                disabled={loading}
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-base"
-                placeholder="Contraseña"
-                required
-                disabled={loading}
-              />
-            </div>
-            
-            <button
-              type="submit"
+        )}
+        <form onSubmit={handleSubmit} className="space-y-5 w-full">
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-green-900 mb-1">Usuario o Email</label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-green-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-base bg-green-50"
+              placeholder="Usuario o email"
+              required
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2.5 sm:py-3 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </button>
-          </form>
-        </div>
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-green-900 mb-1">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-green-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-base bg-green-50"
+              placeholder="Contraseña"
+              required
+              disabled={loading}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-sm"
+          >
+            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          </button>
+        </form>
       </div>
     </div>
   )

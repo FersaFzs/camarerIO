@@ -1,0 +1,65 @@
+@media print {
+  html, body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+  }
+
+  /* Forzar el ancho y alto del ticket para impresora térmica 58mm */
+  .ticket-print-root {
+    width: 58mm !important;
+    min-width: 58mm !important;
+    max-width: 58mm !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+
+  /* Ocultar solo botones y overlays, no todo el body */
+  .print\:hidden, .no-print, button, .print-hide, .modal, .overlay, .backdrop {
+    display: none !important;
+  }
+
+  /* Ajustar la tabla para que no se corte */
+  .ticket-print-root table {
+    width: 100% !important;
+    font-size: 11px !important;
+    border-collapse: collapse !important;
+  }
+
+  /* Eliminar márgenes y paddings internos */
+  .ticket-print-root * {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: none !important;
+    color: #000 !important;
+  }
+
+  /* Eliminar cabeceras y pies de página automáticos del navegador */
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+}
+
+/* Opcional: mejora la visualización en pantalla para el ticket */
+.ticket-print-root {
+  max-width: 350px;
+  margin: 0 auto;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+} 

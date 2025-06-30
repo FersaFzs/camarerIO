@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.font-inter {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body, html {
+  background: #fafbfc;
+  color: #18181b;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+input[type="text"], input[type="number"], textarea {
+  color: #18181b;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+input[type="text"]::placeholder, input[type="number"]::placeholder, textarea::placeholder {
+  color: #b0b3b8;
+  opacity: 1;
+}
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px #6366f133;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #f3f4f6;
+}
+::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 4px;
+} 

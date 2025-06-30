@@ -1,20 +1,29 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import logoApalanque from '../assets/logo-apalanque.png'
 
 function AdminSidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Limpiar el token y redirigir al login
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
   return (
-    <div className="bg-slate-800 text-white w-64 min-h-screen p-4">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Admin Panel</h1>
+    <div className="fixed top-0 left-0 h-screen bg-white text-green-900 w-64 flex flex-col shadow-lg border-r border-green-100 font-inter z-40">
+      <div className="p-6 border-b border-green-100 flex flex-col items-center">
+        <img src={logoApalanque} alt="Logo" className="h-32 object-contain" style={{ maxWidth: 220 }} />
       </div>
       
-      <nav className="space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         <NavLink
           to="/admin/accounting"
           className={({ isActive }) =>
-            `flex items-center space-x-2 p-3 rounded-lg transition-colors ${
+            `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
               isActive
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-300 hover:bg-slate-700'
+                ? 'bg-green-100 text-green-900 border border-green-300'
+                : 'text-green-700 hover:bg-green-50'
             }`
           }
         >
@@ -27,10 +36,10 @@ function AdminSidebar() {
         <NavLink
           to="/admin/inventory"
           className={({ isActive }) =>
-            `flex items-center space-x-2 p-3 rounded-lg transition-colors ${
+            `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
               isActive
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-300 hover:bg-slate-700'
+                ? 'bg-green-100 text-green-900 border border-green-300'
+                : 'text-green-700 hover:bg-green-50'
             }`
           }
         >
@@ -43,10 +52,10 @@ function AdminSidebar() {
         <NavLink
           to="/admin/settings"
           className={({ isActive }) =>
-            `flex items-center space-x-2 p-3 rounded-lg transition-colors ${
+            `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
               isActive
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-300 hover:bg-slate-700'
+                ? 'bg-green-100 text-green-900 border border-green-300'
+                : 'text-green-700 hover:bg-green-50'
             }`
           }
         >
@@ -56,6 +65,18 @@ function AdminSidebar() {
           <span>Settings</span>
         </NavLink>
       </nav>
+
+      <div className="p-4 border-t border-green-100 mt-auto">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-2 p-3 rounded-xl text-green-700 hover:bg-green-50 transition-colors font-semibold"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clipRule="evenodd" />
+          </svg>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
     </div>
   )
 }
