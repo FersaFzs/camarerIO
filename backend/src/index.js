@@ -18,22 +18,17 @@ dotenv.config()
 const app = express()
 const server = http.createServer(app)
 
-// Configuración de CORS unificada
-const corsOptions = {
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://192.168.119.83:5174',
-    'https://camarerio-frontend.onrender.com'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200
-}
+// Configuración CORS simple y funcional
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://camarerio-frontend.onrender.com'],
+  credentials: true
+}))
 
 const io = new SocketIOServer(server, {
-  cors: corsOptions
+  cors: {
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://camarerio-frontend.onrender.com'],
+    credentials: true
+  }
 })
 
 // Middleware para exponer io en req
@@ -42,27 +37,13 @@ app.use((req, res, next) => {
   next()
 })
 
-// Aplicar CORS
-app.use(cors(corsOptions))
-
-// Middleware específico para preflight requests
-app.options('*', cors(corsOptions))
-
-// Middleware de debug para CORS
-app.use((req, res, next) => {
-  console.log('CORS Debug - Origin:', req.headers.origin)
-  console.log('CORS Debug - Method:', req.method)
-  console.log('CORS Debug - Headers:', req.headers)
-  next()
-})
+app.use(express.json())
 
 // Middleware para logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`)
   next()
 })
-
-app.use(express.json())
 
 // Ruta de prueba
 app.get('/api/test', (req, res) => {
