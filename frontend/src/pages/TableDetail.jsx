@@ -4,6 +4,9 @@ import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, markA
 import ProductList from '../components/ProductList'
 import '../mesas-modern.css'
 import TicketView from '../components/TicketView'
+import io from 'socket.io-client'
+
+const SOCKET_URL = 'http://192.168.119.83:5000'
 
 function TableDetail() {
   const { tableNumber } = useParams()
@@ -29,6 +32,17 @@ function TableDetail() {
 
   useEffect(() => {
     loadTableRounds()
+    // Socket.IO para tiempo real
+    const socket = io(SOCKET_URL)
+    socket.on('rounds:update', (data) => {
+      // Solo recargar si es la mesa actual
+      if (!data.tableNumber || data.tableNumber == tableNumber) {
+        loadTableRounds()
+      }
+    })
+    return () => {
+      socket.disconnect()
+    }
   }, [tableNumber])
 
   const loadTableRounds = async () => {

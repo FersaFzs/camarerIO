@@ -4,6 +4,9 @@ import { fetchTableStatuses, createCustomTable, confirmTableService, fetchCustom
 import { useNavigate } from 'react-router-dom'
 import '../mesas-modern.css'
 import logoApalanque from '../assets/logo-apalanque.png'
+import io from 'socket.io-client'
+
+const SOCKET_URL = 'http://192.168.119.83:5000'
 
 function Mesas() {
   const [mesaSeleccionada, setMesaSeleccionada] = useState(null)
@@ -67,12 +70,19 @@ function Mesas() {
 
     loadTableStatuses()
     loadCustomTables()
-    // Actualizar cada 5 segundos
-    const interval = setInterval(() => {
+
+    // Socket.IO para tiempo real
+    const socket = io(SOCKET_URL)
+    socket.on('rounds:update', () => {
       loadTableStatuses()
       loadCustomTables()
-    }, 5000)
-    return () => clearInterval(interval)
+    })
+    socket.on('tables:update', () => {
+      loadCustomTables()
+    })
+    return () => {
+      socket.disconnect()
+    }
   }, [])
 
   const handleConfirmService = async (tableNumber) => {

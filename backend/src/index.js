@@ -2,6 +2,8 @@ import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import http from 'http'
+import { Server as SocketIOServer } from 'socket.io'
 import authRoutes from './routes/authRoutes.js'
 import roundRoutes from './routes/roundRoutes.js'
 import productRoutes from './routes/productRoutes.js'
@@ -14,6 +16,24 @@ import { createTestUser } from './controllers/authController.js'
 dotenv.config()
 
 const app = express()
+const server = http.createServer(app)
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://192.168.119.83:5174'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  }
+})
+
+// Middleware para exponer io en req
+app.use((req, res, next) => {
+  req.io = io
+  next()
+})
 
 // Configuración de CORS más específica
 app.use(cors({
@@ -58,9 +78,17 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/waiterapp
     console.error('Error conectando a MongoDB:', error)
   })
 
+// Socket.IO eventos básicos
+io.on('connection', (socket) => {
+  console.log('Nuevo cliente conectado:', socket.id)
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id)
+  })
+})
+
 // Puerto
 const PORT = process.env.PORT || 5000
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor corriendo en puerto ${PORT}`)
   console.log(`API disponible en http://localhost:${PORT}/api`)
 }) 

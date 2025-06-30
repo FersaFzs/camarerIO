@@ -34,9 +34,10 @@ export const createRound = async (req, res) => {
     const { tableNumber, products } = req.body
     const round = new Round({ tableNumber, products })
     await round.save()
-    // Poblar los productos después de guardar
-    const populatedRound = await Round.findById(round._id).populate('products.product')
-    res.status(201).json(populatedRound)
+    await round.populate('products.product')
+    // Emitir evento
+    req.io.emit('rounds:update', { tableNumber })
+    res.status(201).json(round)
   } catch (error) {
     res.status(400).json({ message: error.message })
   }
@@ -55,9 +56,10 @@ export const addProductsToRound = async (req, res) => {
 
     round.products.push(...products)
     await round.save()
-    // Poblar los productos después de actualizar
-    const updatedRound = await Round.findById(roundId).populate('products.product')
-    res.json(updatedRound)
+    await round.populate('products.product')
+    // Emitir evento
+    req.io.emit('rounds:update', { tableNumber: round.tableNumber })
+    res.json(round)
   } catch (error) {
     res.status(400).json({ message: error.message })
   }
@@ -77,8 +79,9 @@ export const markRoundAsPaid = async (req, res) => {
     round.paidAt = new Date()
     await round.save()
     
-    // Poblar los productos después de actualizar
     const updatedRound = await Round.findById(roundId).populate('products.product')
+    // Emitir evento
+    req.io.emit('rounds:update', { tableNumber: round.tableNumber })
     res.json(updatedRound)
   } catch (error) {
     res.status(400).json({ message: error.message })
@@ -105,6 +108,8 @@ export const markAllRoundsAsPaid = async (req, res) => {
       return res.status(404).json({ message: 'No se encontraron rondas activas para esta mesa' })
     }
 
+    // Emitir evento
+    req.io.emit('rounds:update', { tableNumber })
     res.json({ message: 'Todas las rondas han sido marcadas como pagadas' })
   } catch (error) {
     res.status(400).json({ message: error.message })
@@ -199,6 +204,8 @@ export const confirmTableService = async (req, res) => {
     round.isServiceConfirmed = true;
     await round.save();
 
+    // Emitir evento
+    req.io.emit('rounds:update', { tableNumber })
     res.json({ message: 'Servicio confirmado correctamente' });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -19,6 +19,8 @@ export const createCustomTable = async (req, res) => {
     const nextNumber = maxNumber + 1
     const table = new Table({ name: name.trim(), number: nextNumber })
     await table.save()
+    // Emitir evento para que todos los clientes recarguen mesas
+    req.io.emit('tables:update')
     res.status(201).json(table)
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -42,6 +44,8 @@ export const deleteCustomTable = async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ message: 'Mesa personalizada no encontrada' })
     }
+    // Emitir evento para que todos los clientes recarguen mesas
+    req.io.emit('tables:update')
     res.status(200).json({ message: 'Mesa personalizada eliminada' })
   } catch (error) {
     res.status(500).json({ message: error.message })
