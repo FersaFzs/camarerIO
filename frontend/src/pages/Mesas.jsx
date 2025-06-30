@@ -6,7 +6,7 @@ import '../mesas-modern.css'
 import logoApalanque from '../assets/logo-apalanque.png'
 import io from 'socket.io-client'
 
-const SOCKET_URL = 'http://192.168.119.83:5000'
+const SOCKET_URL = 'https://camarerio.onrender.com'
 
 function Mesas() {
   const [mesaSeleccionada, setMesaSeleccionada] = useState(null)

@@ -1,4 +1,4 @@
-const API_URL = 'http://192.168.119.83:5000/api'
+const API_URL = 'https://camarerio.onrender.com/api'
 
 export const getTableRounds = async (tableNumber) => {
   try {
