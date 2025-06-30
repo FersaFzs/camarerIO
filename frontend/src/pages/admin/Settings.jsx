@@ -25,7 +25,7 @@ function Settings() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('http://192.168.119.83:5000/api/auth/users', {
+      const res = await fetch('https://camarerio.onrender.com/api/auth/users', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       })
       if (!res.ok) throw new Error('Error al obtener usuarios')
