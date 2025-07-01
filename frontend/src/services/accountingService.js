@@ -2,7 +2,12 @@ const API_URL = 'https://camarerio.onrender.com/api';
 
 export const getDailyStats = async () => {
   try {
-    const response = await fetch(`${API_URL}/accounting/daily`);
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/accounting/daily`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas diarias');
     }
@@ -15,13 +20,18 @@ export const getDailyStats = async () => {
 
 export const getMonthlyStats = async (month, year) => {
   try {
+    const token = localStorage.getItem('token');
     const url = new URL(`${API_URL}/accounting/monthly`);
     if (month && year) {
       url.searchParams.append('month', month);
       url.searchParams.append('year', year);
     }
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas mensuales');
     }
@@ -34,7 +44,12 @@ export const getMonthlyStats = async (month, year) => {
 
 export const getPreviousMonths = async () => {
   try {
-    const response = await fetch(`${API_URL}/accounting/previous-months`);
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/accounting/previous-months`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas de meses anteriores');
     }

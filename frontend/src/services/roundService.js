@@ -1,8 +1,14 @@
 const API_URL = 'https://camarerio.onrender.com/api'
 
+const authHeader = () => ({
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
+});
+
 export const getTableRounds = async (tableNumber) => {
   try {
-    const response = await fetch(`${API_URL}/rounds/table/${tableNumber}`)
+    const response = await fetch(`${API_URL}/rounds/table/${tableNumber}`, {
+      headers: authHeader()
+    })
     if (!response.ok) {
       throw new Error('Error al obtener las rondas')
     }
@@ -19,6 +25,7 @@ export const createRound = async (tableNumber, products) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader()
       },
       body: JSON.stringify({ tableNumber, products }),
     })
@@ -38,6 +45,7 @@ export const addProductsToRound = async (roundId, products) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader()
       },
       body: JSON.stringify({ products }),
     })
@@ -57,7 +65,7 @@ export const markRoundAsPaid = async (roundId) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...authHeader()
       }
     })
 
@@ -87,7 +95,9 @@ export const getProducts = async () => {
 
 export const fetchTableStatuses = async () => {
   try {
-    const response = await fetch(`${API_URL}/rounds/statuses`);
+    const response = await fetch(`${API_URL}/rounds/statuses`, {
+      headers: authHeader()
+    });
     if (!response.ok) {
       throw new Error('Error al obtener el estado de las mesas');
     }
@@ -106,7 +116,7 @@ export const markAllRoundsAsPaid = async (tableNumber) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...authHeader()
       }
     })
 
@@ -127,6 +137,7 @@ export const updateRoundProducts = async (roundId, products) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader()
       },
       body: JSON.stringify({ products })
     })
@@ -148,6 +159,7 @@ export const createProduct = async (productData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader()
       },
       body: JSON.stringify(productData),
     });
@@ -169,6 +181,7 @@ export const updateProduct = async (productId, productData) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader()
       },
       body: JSON.stringify(productData),
     });
@@ -188,6 +201,7 @@ export const deleteProduct = async (productId) => {
   try {
     const response = await fetch(`${API_URL}/products/${productId}`, {
       method: 'DELETE',
+      headers: authHeader()
     });
     
     if (!response.ok) {
@@ -206,7 +220,8 @@ export const createCustomTable = async (tableName) => {
     const response = await fetch(`${API_URL}/tables/custom`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...authHeader()
       },
       body: JSON.stringify({ name: tableName })
     });
@@ -232,7 +247,7 @@ export const confirmTableService = async (tableNumber) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...authHeader()
       }
     });
 
@@ -251,7 +266,9 @@ export const confirmTableService = async (tableNumber) => {
 
 export const fetchCustomTables = async () => {
   try {
-    const response = await fetch(`${API_URL}/tables`)
+    const response = await fetch(`${API_URL}/tables`, {
+      headers: authHeader()
+    })
     if (!response.ok) {
       throw new Error('Error al obtener las mesas personalizadas')
     }
@@ -266,9 +283,7 @@ export const deleteCustomTable = async (tableId) => {
   try {
     const response = await fetch(`${API_URL}/tables/${tableId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: authHeader()
     })
     if (!response.ok) {
       throw new Error('Error al eliminar la mesa personalizada')
@@ -286,7 +301,7 @@ export const generateTicket = async (tableNumber, roundIds, paymentMethod = 'efe
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...authHeader()
       },
       body: JSON.stringify({
         tableNumber,
@@ -309,9 +324,7 @@ export const generateTicket = async (tableNumber, roundIds, paymentMethod = 'efe
 export const getTicket = async (ticketId) => {
   try {
     const response = await fetch(`${API_URL}/tickets/${ticketId}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
+      headers: authHeader()
     });
 
     if (!response.ok) {
