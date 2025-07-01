@@ -1,6 +1,6 @@
 {
-  "short_name": "WaiterApp",
-  "name": "WaiterApp - Gestión de Mesas",
+  "short_name": "AppAlanque",
+  "name": "AppAlanque - Gestión de Mesas",
   "icons": [
     { "src": "/icons/icon-72x72.png", "sizes": "72x72", "type": "image/png" },
     { "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" },
