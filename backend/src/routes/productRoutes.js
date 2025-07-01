@@ -7,13 +7,13 @@ const router = express.Router();
 
 // @route   GET /api/products
 // @desc    Get all products
-// @access  Public
-router.get('/', getProducts);
+// @access  Private
+router.get('/', requireAuth, getProducts);
 
 // @route   POST /api/products
 // @desc    Create a new product
-// @access  Private (admin only)
-router.post('/', requireAuth, requireAdmin, upload.single('image'), createProduct);
+// @access  Private
+router.post('/', requireAuth, upload.single('image'), createProduct);
 
 // @route   PUT /api/products/:id
 // @desc    Update a product

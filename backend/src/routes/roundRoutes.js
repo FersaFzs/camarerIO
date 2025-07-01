@@ -18,7 +18,7 @@ router.post('/', requireAuth, createRound)
 router.post('/:roundId/products', requireAuth, addProductsToRound)
 router.put('/:roundId/pay', requireAuth, markRoundAsPaid)
 router.put('/table/:tableNumber/pay-all', requireAuth, markAllRoundsAsPaid)
-router.get('/statuses', requireAuth, getTableStatuses)
+router.get('/statuses', getTableStatuses)
 router.put('/:roundId', requireAuth, updateRoundProducts)
 router.put('/table/:tableNumber/confirm-service', requireAuth, confirmTableService)
 

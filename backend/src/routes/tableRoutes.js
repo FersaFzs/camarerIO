@@ -7,7 +7,7 @@ const router = express.Router()
 // Obtener todas las mesas personalizadas
 router.get('/', requireAuth, getCustomTables)
 // Crear una nueva mesa personalizada
-router.post('/custom', requireAuth, requireAdmin, createCustomTable)
+router.post('/custom', requireAuth, createCustomTable)
 // Eliminar una mesa personalizada por su id
 router.delete('/:id', requireAuth, requireAdmin, deleteCustomTable)
 
