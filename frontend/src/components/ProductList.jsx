@@ -9,11 +9,13 @@ function ProductList({ onAddProducts, onCancel }) {
   const [selectedProducts, setSelectedProducts] = useState({});
   const [showCustomProductModal, setShowCustomProductModal] = useState(false);
   const [customProduct, setCustomProduct] = useState({ name: '', price: '' });
+  const [openCategories, setOpenCategories] = useState([]);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const productsData = await getProducts();
+        console.log('Productos recibidos:', productsData.map(p => ({ nombre: p.name, categoria: p.category })));
         setProducts(productsData);
       } catch (err) {
         console.error('Error al cargar productos:', err);
@@ -79,6 +81,14 @@ function ProductList({ onAddProducts, onCancel }) {
     }
   };
 
+  // Agrupar productos por categoría
+  const groupedProducts = products.reduce((acc, product) => {
+    const cat = product.category || 'Otros';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(product);
+    return acc;
+  }, {});
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-neutral-50 flex items-center justify-center font-inter">
@@ -125,51 +135,71 @@ function ProductList({ onAddProducts, onCancel }) {
       </div>
       {/* Contenido principal con padding top para la barra */}
       <div className="flex-1 flex flex-col md:flex-row pt-20 min-h-0">
-        {/* Productos */}
-        <div className="flex-1 overflow-y-auto p-4 min-h-0">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {products.map(product => (
-              <div
-                key={product._id}
-                className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 cursor-pointer flex flex-col items-center p-2.5 ${selectedProducts[product._id] ? 'border-green-500 ring-2 ring-green-200' : 'border-neutral-200'}`}
-                onClick={() => handleQuantityChange(product._id, 1)}
-              >
-                {product.imageUrl ? (
-                  <img src={product.imageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-xl mb-1" />
-                ) : (
-                  <div className="w-24 h-24 bg-green-50 flex items-center justify-center rounded-xl mb-1 text-green-200">Sin imagen</div>
-                )}
-                <div className="text-center w-full">
-                  <h3 className="text-base font-semibold text-neutral-900 truncate">{product.name}</h3>
-                  <p className="text-green-700 font-bold text-base">{product.price.toFixed(2)} €</p>
-                </div>
-                {selectedProducts[product._id] > 0 && (
-                  <div className="absolute top-1 right-1 bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-base font-bold shadow">
-                    {selectedProducts[product._id]}
-                  </div>
-                )}
-                {/* Solo mostrar el botón '-' si hay cantidad seleccionada */}
-                {selectedProducts[product._id] > 0 && (
-                  <div className="flex w-full mt-1 gap-1 justify-center">
-                    <button
-                      type="button"
-                      className="bg-green-100 text-green-700 rounded-lg w-full py-1.5 flex items-center justify-center text-base font-bold hover:bg-green-200 transition-colors"
-                      onClick={e => { e.stopPropagation(); handleQuantityChange(product._id, -1); }}
-                    >
-                      -
-                    </button>
+        {/* Productos agrupados por categoría en modo acordeón */}
+        <div className="flex flex-col gap-2">
+          {Object.entries(groupedProducts).map(([category, prods]) => {
+            const isOpen = openCategories.includes(category);
+            return (
+              <div key={category} className="mb-1">
+                <button
+                  type="button"
+                  className={`w-full flex items-center justify-between px-3 py-3 bg-green-50 rounded-xl shadow-sm border border-green-100 text-green-900 font-bold text-lg capitalize transition-colors focus:outline-none ${isOpen ? 'bg-green-100' : ''}`}
+                  onClick={() => setOpenCategories(prev =>
+                    prev.includes(category)
+                      ? prev.filter(c => c !== category)
+                      : [...prev, category]
+                  )}
+                >
+                  <span>{category}</span>
+                  <span className={`ml-2 transition-transform ${isOpen ? 'rotate-90' : ''}`}>▶</span>
+                </button>
+                {isOpen && (
+                  <div className="mt-2 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {prods.map(product => (
+                      <div
+                        key={product._id}
+                        className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 cursor-pointer flex flex-col items-center p-2.5 ${selectedProducts[product._id] ? 'border-green-500 ring-2 ring-green-200' : 'border-neutral-200'}`}
+                        onClick={() => handleQuantityChange(product._id, 1)}
+                      >
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-xl mb-1" />
+                        ) : (
+                          <div className="w-20 h-20 bg-green-50 flex items-center justify-center rounded-xl mb-1 text-green-200">Sin imagen</div>
+                        )}
+                        <div className="text-center w-full">
+                          <h3 className="text-sm font-semibold text-neutral-900 truncate">{product.name}</h3>
+                          <p className="text-green-700 font-bold text-sm">{product.price.toFixed(2)} €</p>
+                        </div>
+                        {selectedProducts[product._id] > 0 && (
+                          <div className="absolute top-1 right-1 bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-base font-bold shadow">
+                            {selectedProducts[product._id]}
+                          </div>
+                        )}
+                        {selectedProducts[product._id] > 0 && (
+                          <div className="flex w-full mt-1 gap-1 justify-center">
+                            <button
+                              type="button"
+                              className="bg-green-100 text-green-700 rounded-lg w-full py-1.5 flex items-center justify-center text-base font-bold hover:bg-green-200 transition-colors"
+                              onClick={e => { e.stopPropagation(); handleQuantityChange(product._id, -1); }}
+                            >
+                              -
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
-            ))}
-            {/* Producto personalizado */}
-            <div
-              onClick={() => setShowCustomProductModal(true)}
-              className="bg-white rounded-2xl shadow-sm border-2 border-dashed border-green-300 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 transition-colors p-2 min-h-[120px]"
-            >
-              <span className="text-4xl text-green-600">+</span>
-              <p className="mt-1 text-base text-green-700 font-medium">Producto Personalizado</p>
-            </div>
+            );
+          })}
+          {/* Producto personalizado */}
+          <div
+            onClick={() => setShowCustomProductModal(true)}
+            className="bg-white rounded-2xl shadow-sm border-2 border-dashed border-green-300 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 transition-colors p-2 min-h-[120px] mt-2"
+          >
+            <span className="text-4xl text-green-600">+</span>
+            <p className="mt-1 text-base text-green-700 font-medium">Producto Personalizado</p>
           </div>
         </div>
         {/* Lateral o inferior: productos seleccionados */}

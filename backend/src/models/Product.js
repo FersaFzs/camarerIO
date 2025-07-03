@@ -12,6 +12,12 @@ const productSchema = new mongoose.Schema({
   imageUrl: {
     type: String,
     default: null
+  },
+  category: {
+    type: String,
+    enum: ['Cervezas', 'Refrescos', 'Copas', 'Cafés', 'Otros'],
+    required: true,
+    default: 'Otros'
   }
 })
 

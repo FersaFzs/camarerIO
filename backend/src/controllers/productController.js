@@ -12,16 +12,20 @@ export const getProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, price } = req.body;
+    console.log('BODY:', req.body);
+    console.log('FILE:', req.file);
+    const { name, price, category } = req.body;
     const imageUrl = req.file ? req.file.path : null;
 
-    console.log('Datos recibidos:', { name, price, imageUrl });
-    console.log('Archivo recibido:', req.file);
+    if (!category) {
+      return res.status(400).json({ message: 'La categoría es obligatoria' });
+    }
 
     const product = new Product({
       name,
       price: parseFloat(price),
-      imageUrl
+      imageUrl,
+      category
     });
 
     const savedProduct = await product.save();
@@ -38,20 +42,15 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price } = req.body;
+    const { name, price, category } = req.body;
     const imageUrl = req.file ? req.file.path : undefined;
-
-    console.log('Datos de actualización:', { name, price, imageUrl });
-    console.log('Archivo recibido:', req.file);
 
     const updateData = { 
       name, 
       price: parseFloat(price)
     };
-    
-    if (imageUrl) {
-      updateData.imageUrl = imageUrl;
-    }
+    if (category) updateData.category = category;
+    if (imageUrl) updateData.imageUrl = imageUrl;
 
     const product = await Product.findByIdAndUpdate(
       id,

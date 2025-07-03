@@ -11,7 +11,8 @@ const Inventory = () => {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
-    image: null
+    image: null,
+    category: 'Otros'
   });
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -39,7 +40,8 @@ const Inventory = () => {
       setFormData({
         name: product.name,
         price: product.price,
-        image: null
+        image: null,
+        category: product.category || 'Otros'
       });
       setPreviewUrl(product.imageUrl);
     } else {
@@ -47,7 +49,8 @@ const Inventory = () => {
       setFormData({
         name: '',
         price: '',
-        image: null
+        image: null,
+        category: 'Otros'
       });
       setPreviewUrl(null);
     }
@@ -60,7 +63,8 @@ const Inventory = () => {
     setFormData({
       name: '',
       price: '',
-      image: null
+      image: null,
+      category: 'Otros'
     });
     setPreviewUrl(null);
   };
@@ -79,6 +83,7 @@ const Inventory = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('price', formData.price);
+      formDataToSend.append('category', formData.category);
       if (formData.image) {
         formDataToSend.append('image', formData.image);
       }
@@ -207,6 +212,21 @@ const Inventory = () => {
                   className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-green-900 font-medium mb-2">Categoría</label>
+                <select
+                  value={formData.category}
+                  onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50 text-green-900 font-semibold capitalize"
+                  required
+                >
+                  <option value="Cervezas">Cervezas</option>
+                  <option value="Refrescos">Refrescos</option>
+                  <option value="Copas">Copas</option>
+                  <option value="Cafés">Cafés</option>
+                  <option value="Otros">Otros</option>
+                </select>
               </div>
               <div>
                 <label className="block text-green-900 font-medium mb-2">Imagen</label>
