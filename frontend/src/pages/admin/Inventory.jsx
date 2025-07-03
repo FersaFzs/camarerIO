@@ -45,6 +45,8 @@ const Inventory = () => {
   const [softDrinks, setSoftDrinks] = useState([]);
   const [newLiqueur, setNewLiqueur] = useState('');
   const [newSoftDrink, setNewSoftDrink] = useState('');
+  const [liqueurMsg, setLiqueurMsg] = useState(null);
+  const [softDrinkMsg, setSoftDrinkMsg] = useState(null);
 
   useEffect(() => {
     loadProducts();
@@ -150,28 +152,60 @@ const Inventory = () => {
 
   const handleAddLiqueur = async (e) => {
     e.preventDefault();
+    setLiqueurMsg(null);
     if (!newLiqueur.trim()) return;
-    await addLiqueur(newLiqueur.trim());
-    setLiqueurs(await fetchLiqueurs());
-    setNewLiqueur('');
+    if (liqueurs.some(l => l.name.toLowerCase() === newLiqueur.trim().toLowerCase())) {
+      setLiqueurMsg('Ese licor ya existe.');
+      return;
+    }
+    try {
+      await addLiqueur(newLiqueur.trim());
+      setLiqueurMsg('Licor añadido correctamente.');
+      setLiqueurs(await fetchLiqueurs());
+      setNewLiqueur('');
+    } catch (err) {
+      setLiqueurMsg('Error al añadir licor.');
+    }
   };
 
   const handleDeleteLiqueur = async (id) => {
-    await deleteLiqueur(id);
-    setLiqueurs(await fetchLiqueurs());
+    setLiqueurMsg(null);
+    try {
+      await deleteLiqueur(id);
+      setLiqueurMsg('Licor eliminado.');
+      setLiqueurs(await fetchLiqueurs());
+    } catch (err) {
+      setLiqueurMsg('Error al eliminar licor.');
+    }
   };
 
   const handleAddSoftDrink = async (e) => {
     e.preventDefault();
+    setSoftDrinkMsg(null);
     if (!newSoftDrink.trim()) return;
-    await addSoftDrink(newSoftDrink.trim());
-    setSoftDrinks(await fetchSoftDrinks());
-    setNewSoftDrink('');
+    if (softDrinks.some(s => s.name.toLowerCase() === newSoftDrink.trim().toLowerCase())) {
+      setSoftDrinkMsg('Ese refresco ya existe.');
+      return;
+    }
+    try {
+      await addSoftDrink(newSoftDrink.trim());
+      setSoftDrinkMsg('Refresco añadido correctamente.');
+      setSoftDrinks(await fetchSoftDrinks());
+      setNewSoftDrink('');
+    } catch (err) {
+      setSoftDrinkMsg('Error al añadir refresco.');
+    }
   };
 
   const handleDeleteSoftDrink = async (id) => {
-    await deleteSoftDrink(id);
-    setSoftDrinks(await fetchSoftDrinks());
+    setSoftDrinkMsg(null);
+    try {
+      await deleteSoftDrink(id);
+      setSoftDrinkMsg('Refresco eliminado.');
+      setSoftDrinks(await fetchSoftDrinks());
+    } catch (err) {
+      setSoftDrinkMsg('Error al eliminar refresco.');
+    }
   };
 
   if (loading) {
@@ -331,7 +365,9 @@ const Inventory = () => {
             <input type="text" value={newLiqueur} onChange={e => setNewLiqueur(e.target.value)} placeholder="Añadir licor..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
             <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
           </form>
+          {liqueurMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{liqueurMsg}</div>}
           <ul className="space-y-2">
+            {liqueurs.length === 0 && <li className="text-green-300">No hay licores añadidos.</li>}
             {liqueurs.map(l => (
               <li key={l._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
                 <span>{l.name}</span>
@@ -346,7 +382,9 @@ const Inventory = () => {
             <input type="text" value={newSoftDrink} onChange={e => setNewSoftDrink(e.target.value)} placeholder="Añadir refresco..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
             <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
           </form>
+          {softDrinkMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{softDrinkMsg}</div>}
           <ul className="space-y-2">
+            {softDrinks.length === 0 && <li className="text-green-300">No hay refrescos añadidos.</li>}
             {softDrinks.map(s => (
               <li key={s._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
                 <span>{s.name}</span>
