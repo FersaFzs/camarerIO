@@ -2,6 +2,32 @@ import { useState, useEffect } from 'react';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../../services/productService';
 import '../../mesas-modern.css'
 
+// NUEVO: servicios para licores y refrescos
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+async function fetchLiqueurs() {
+  const res = await fetch(`${API_URL}/licores`);
+  return await res.json();
+}
+async function addLiqueur(name) {
+  const res = await fetch(`${API_URL}/licores`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+  return await res.json();
+}
+async function deleteLiqueur(id) {
+  await fetch(`${API_URL}/licores/${id}`, { method: 'DELETE' });
+}
+async function fetchSoftDrinks() {
+  const res = await fetch(`${API_URL}/refrescos`);
+  return await res.json();
+}
+async function addSoftDrink(name) {
+  const res = await fetch(`${API_URL}/refrescos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+  return await res.json();
+}
+async function deleteSoftDrink(id) {
+  await fetch(`${API_URL}/refrescos/${id}`, { method: 'DELETE' });
+}
+
 const Inventory = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,9 +41,15 @@ const Inventory = () => {
     category: 'Otros'
   });
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [liqueurs, setLiqueurs] = useState([]);
+  const [softDrinks, setSoftDrinks] = useState([]);
+  const [newLiqueur, setNewLiqueur] = useState('');
+  const [newSoftDrink, setNewSoftDrink] = useState('');
 
   useEffect(() => {
     loadProducts();
+    fetchLiqueurs().then(setLiqueurs);
+    fetchSoftDrinks().then(setSoftDrinks);
   }, []);
 
   const loadProducts = async () => {
@@ -114,6 +146,32 @@ const Inventory = () => {
       setError('Error al eliminar el producto');
       console.error(err);
     }
+  };
+
+  const handleAddLiqueur = async (e) => {
+    e.preventDefault();
+    if (!newLiqueur.trim()) return;
+    await addLiqueur(newLiqueur.trim());
+    setLiqueurs(await fetchLiqueurs());
+    setNewLiqueur('');
+  };
+
+  const handleDeleteLiqueur = async (id) => {
+    await deleteLiqueur(id);
+    setLiqueurs(await fetchLiqueurs());
+  };
+
+  const handleAddSoftDrink = async (e) => {
+    e.preventDefault();
+    if (!newSoftDrink.trim()) return;
+    await addSoftDrink(newSoftDrink.trim());
+    setSoftDrinks(await fetchSoftDrinks());
+    setNewSoftDrink('');
+  };
+
+  const handleDeleteSoftDrink = async (id) => {
+    await deleteSoftDrink(id);
+    setSoftDrinks(await fetchSoftDrinks());
   };
 
   if (loading) {
@@ -265,6 +323,39 @@ const Inventory = () => {
           </div>
         </div>
       )}
+
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
+          <h2 className="text-xl font-bold text-green-900 mb-4">Licores para combinados</h2>
+          <form onSubmit={handleAddLiqueur} className="flex gap-2 mb-4">
+            <input type="text" value={newLiqueur} onChange={e => setNewLiqueur(e.target.value)} placeholder="Añadir licor..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
+            <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
+          </form>
+          <ul className="space-y-2">
+            {liqueurs.map(l => (
+              <li key={l._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
+                <span>{l.name}</span>
+                <button onClick={() => handleDeleteLiqueur(l._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
+          <h2 className="text-xl font-bold text-green-900 mb-4">Refrescos para combinados</h2>
+          <form onSubmit={handleAddSoftDrink} className="flex gap-2 mb-4">
+            <input type="text" value={newSoftDrink} onChange={e => setNewSoftDrink(e.target.value)} placeholder="Añadir refresco..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
+            <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
+          </form>
+          <ul className="space-y-2">
+            {softDrinks.map(s => (
+              <li key={s._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
+                <span>{s.name}</span>
+                <button onClick={() => handleDeleteSoftDrink(s._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 };
