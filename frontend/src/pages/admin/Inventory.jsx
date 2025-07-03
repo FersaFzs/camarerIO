@@ -3,7 +3,7 @@ import { getProducts, createProduct, updateProduct, deleteProduct } from '../../
 import '../../mesas-modern.css'
 
 // NUEVO: servicios para licores y refrescos
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/api';
 
 async function fetchLiqueurs() {
   const res = await fetch(`${API_URL}/licores`);

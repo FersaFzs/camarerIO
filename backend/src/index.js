@@ -45,6 +45,15 @@ app.use((req, res, next) => {
   next()
 })
 
+// Content-Security-Policy segura y flexible
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; img-src 'self' data: https://camarerio.onrender.com; connect-src 'self' https://camarerio.onrender.com; style-src 'self' 'unsafe-inline'; script-src 'self';"
+  );
+  next();
+});
+
 // Ruta de prueba
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API funcionando correctamente' })
