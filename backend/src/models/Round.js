@@ -15,6 +15,10 @@ const roundSchema = new mongoose.Schema({
       type: Number,
       required: true,
       default: 1
+    },
+    combination: {
+      type: String,
+      required: false
     }
   }],
   total: {

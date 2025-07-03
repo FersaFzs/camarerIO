@@ -67,11 +67,24 @@ function ProductList({ onAddProducts, onCancel }) {
   };
 
   const handleAddToRound = () => {
-    const productsToAdd = Object.entries(selectedProducts).map(([productId, quantity]) => ({
-      product: productId,
-      quantity
-    }));
-    
+    const productsToAdd = Object.entries(selectedProducts).map(([productId, quantity]) => {
+      // Detectar si es un cubata personalizado
+      if (productId.startsWith('cubata-')) {
+        // Buscar el producto Cubata real
+        const cubata = products.find(p => p.name.toLowerCase() === 'cubata' && p.category === 'Copas');
+        // Extraer la combinación del nombre
+        const product = products.find(p => p._id === productId);
+        return {
+          product: cubata._id,
+          quantity,
+          combination: product ? product.name : ''
+        };
+      }
+      return {
+        product: productId,
+        quantity
+      };
+    });
     if (productsToAdd.length > 0) {
       onAddProducts(productsToAdd);
       setSelectedProducts({});
