@@ -47,6 +47,7 @@ const Inventory = () => {
   const [newSoftDrink, setNewSoftDrink] = useState('');
   const [liqueurMsg, setLiqueurMsg] = useState(null);
   const [softDrinkMsg, setSoftDrinkMsg] = useState(null);
+  const [showCombinados, setShowCombinados] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -208,22 +209,6 @@ const Inventory = () => {
     }
   };
 
-  // Añadir función para limpiar cubatas personalizados
-  const cleanCustomCubatas = async () => {
-    if (!window.confirm('¿Seguro que quieres eliminar todos los cubatas personalizados?')) return;
-    try {
-      // Filtrar productos cubata personalizados
-      const cubatas = products.filter(p => p.category === 'Copas' && p.name.includes('+'));
-      for (const cubata of cubatas) {
-        await deleteProduct(cubata._id);
-      }
-      setProducts(prev => prev.filter(p => !(p.category === 'Copas' && p.name.includes('+'))));
-      alert('Cubatas personalizados eliminados.');
-    } catch (err) {
-      alert('Error al eliminar cubatas personalizados.');
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -236,20 +221,12 @@ const Inventory = () => {
     <div className="w-full">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-green-900">Inventario</h1>
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleOpenModal()}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold"
-          >
-            Nuevo Producto
-          </button>
-          <button
-            onClick={cleanCustomCubatas}
-            className="bg-red-100 hover:bg-red-200 text-red-700 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold border border-red-300"
-          >
-            Limpiar Cubatas Personalizados
-          </button>
-        </div>
+        <button
+          onClick={() => handleOpenModal()}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold"
+        >
+          Nuevo Producto
+        </button>
       </div>
 
       {error && (
@@ -300,6 +277,54 @@ const Inventory = () => {
           </div>
         ))}
       </div>
+
+      <div className="mt-12 flex justify-center">
+        <button
+          onClick={() => setShowCombinados(v => !v)}
+          className="px-6 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold border border-green-200 shadow-sm"
+        >
+          {showCombinados ? 'Ocultar gestión de combinados' : 'Gestionar combinados (Licores y Refrescos)'}
+        </button>
+      </div>
+
+      {showCombinados && (
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
+            <h2 className="text-xl font-bold text-green-900 mb-4">Licores para combinados</h2>
+            <form onSubmit={handleAddLiqueur} className="flex gap-2 mb-4">
+              <input type="text" value={newLiqueur} onChange={e => setNewLiqueur(e.target.value)} placeholder="Añadir licor..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
+              <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
+            </form>
+            {liqueurMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{liqueurMsg}</div>}
+            <ul className="space-y-2">
+              {liqueurs.length === 0 && <li className="text-green-300">No hay licores añadidos.</li>}
+              {liqueurs.map(l => (
+                <li key={l._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
+                  <span>{l.name}</span>
+                  <button onClick={() => handleDeleteLiqueur(l._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
+            <h2 className="text-xl font-bold text-green-900 mb-4">Refrescos para combinados</h2>
+            <form onSubmit={handleAddSoftDrink} className="flex gap-2 mb-4">
+              <input type="text" value={newSoftDrink} onChange={e => setNewSoftDrink(e.target.value)} placeholder="Añadir refresco..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
+              <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
+            </form>
+            {softDrinkMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{softDrinkMsg}</div>}
+            <ul className="space-y-2">
+              {softDrinks.length === 0 && <li className="text-green-300">No hay refrescos añadidos.</li>}
+              {softDrinks.map(s => (
+                <li key={s._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
+                  <span>{s.name}</span>
+                  <button onClick={() => handleDeleteSoftDrink(s._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
@@ -381,43 +406,6 @@ const Inventory = () => {
           </div>
         </div>
       )}
-
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
-          <h2 className="text-xl font-bold text-green-900 mb-4">Licores para combinados</h2>
-          <form onSubmit={handleAddLiqueur} className="flex gap-2 mb-4">
-            <input type="text" value={newLiqueur} onChange={e => setNewLiqueur(e.target.value)} placeholder="Añadir licor..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
-            <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
-          </form>
-          {liqueurMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{liqueurMsg}</div>}
-          <ul className="space-y-2">
-            {liqueurs.length === 0 && <li className="text-green-300">No hay licores añadidos.</li>}
-            {liqueurs.map(l => (
-              <li key={l._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
-                <span>{l.name}</span>
-                <button onClick={() => handleDeleteLiqueur(l._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
-          <h2 className="text-xl font-bold text-green-900 mb-4">Refrescos para combinados</h2>
-          <form onSubmit={handleAddSoftDrink} className="flex gap-2 mb-4">
-            <input type="text" value={newSoftDrink} onChange={e => setNewSoftDrink(e.target.value)} placeholder="Añadir refresco..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
-            <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
-          </form>
-          {softDrinkMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{softDrinkMsg}</div>}
-          <ul className="space-y-2">
-            {softDrinks.length === 0 && <li className="text-green-300">No hay refrescos añadidos.</li>}
-            {softDrinks.map(s => (
-              <li key={s._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
-                <span>{s.name}</span>
-                <button onClick={() => handleDeleteSoftDrink(s._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
     </div>
   );
 };

@@ -16,11 +16,11 @@ export const generateTicket = async (req, res) => {
     
     rounds.forEach(round => {
       round.products.forEach(item => {
-        const itemTotal = item.quantity * (item.product?.price || 0);
+        const itemTotal = item.quantity * (item.product?.price || item.price || 0);
         items.push({
-          name: item.product?.name || 'Producto desconocido',
+          name: item.product?.name || item.name || 'Producto desconocido',
           quantity: item.quantity,
-          price: item.product?.price || 0,
+          price: item.product?.price || item.price || 0,
           total: itemTotal
         });
         total += itemTotal;
