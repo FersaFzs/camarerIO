@@ -4,12 +4,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
-import authRoutes from './routes/authRoutes.js'
-import roundRoutes from './routes/roundRoutes.js'
-import productRoutes from './routes/productRoutes.js'
-import accountingRoutes from './routes/accountingRoutes.js'
-import tableRoutes from './routes/tableRoutes.js'
-import ticketRoutes from './routes/ticketRoutes.js'
+import router from './routes/index.js'
 import { createTestUser } from './controllers/authController.js'
 
 // Cargar variables de entorno
@@ -60,12 +55,7 @@ app.get('/api/test', (req, res) => {
 })
 
 // Rutas
-app.use('/api/auth', authRoutes)
-app.use('/api/rounds', roundRoutes)
-app.use('/api/products', productRoutes)
-app.use('/api/accounting', accountingRoutes)
-app.use('/api/tables', tableRoutes)
-app.use('/api/tickets', ticketRoutes)
+app.use('/api', router)
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/waiterapp')
