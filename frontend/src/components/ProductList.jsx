@@ -115,6 +115,39 @@ function ProductList({ onAddProducts, onCancel }) {
     }
   };
 
+  const handleCubataAdd = async () => {
+    if (!selectedLicor || !selectedRefresco || !cubataProduct) return;
+    const name = `${selectedLicor} + ${selectedRefresco}`;
+    // Buscar si ya existe un producto con ese nombre y categoría Copas
+    let existing = products.find(p => p.name === name && p.category === 'Copas');
+    let newProduct = existing;
+    if (!existing) {
+      // Crear el producto en la BD
+      try {
+        newProduct = await createProduct({
+          name,
+          price: cubataProduct.price,
+          category: 'Copas',
+          imageUrl: cubataProduct.imageUrl || ''
+        });
+        setProducts(prev => [...prev, newProduct]);
+      } catch (err) {
+        setShowCubataModal(false);
+        setSelectedLicor('');
+        setSelectedRefresco('');
+        alert('Error al crear el cubata personalizado');
+        return;
+      }
+    }
+    setSelectedProducts(prev => ({
+      ...prev,
+      [newProduct._id]: (prev[newProduct._id] || 0) + 1
+    }));
+    setShowCubataModal(false);
+    setSelectedLicor('');
+    setSelectedRefresco('');
+  };
+
   // Agrupar productos por categoría
   const groupedProducts = products.reduce((acc, product) => {
     const cat = product.category || 'Otros';
@@ -415,29 +448,7 @@ function ProductList({ onAddProducts, onCancel }) {
                 type="button"
                 disabled={!selectedLicor || !selectedRefresco}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50"
-                onClick={() => {
-                  const name = `${selectedLicor} + ${selectedRefresco}`;
-                  const tempId = `cubata-${selectedLicor}-${selectedRefresco}`;
-                  setSelectedProducts(prev => ({
-                    ...prev,
-                    [tempId]: (prev[tempId] || 0) + 1
-                  }));
-                  if (!products.find(p => p._id === tempId)) {
-                    setProducts(prev => [
-                      ...prev,
-                      {
-                        ...cubataProduct,
-                        _id: tempId,
-                        name,
-                        price: cubataProduct.price,
-                        imageUrl: cubataProduct.imageUrl
-                      }
-                    ]);
-                  }
-                  setShowCubataModal(false);
-                  setSelectedLicor('');
-                  setSelectedRefresco('');
-                }}
+                onClick={handleCubataAdd}
               >
                 Añadir
               </button>

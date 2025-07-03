@@ -208,6 +208,22 @@ const Inventory = () => {
     }
   };
 
+  // Añadir función para limpiar cubatas personalizados
+  const cleanCustomCubatas = async () => {
+    if (!window.confirm('¿Seguro que quieres eliminar todos los cubatas personalizados?')) return;
+    try {
+      // Filtrar productos cubata personalizados
+      const cubatas = products.filter(p => p.category === 'Copas' && p.name.includes('+'));
+      for (const cubata of cubatas) {
+        await deleteProduct(cubata._id);
+      }
+      setProducts(prev => prev.filter(p => !(p.category === 'Copas' && p.name.includes('+'))));
+      alert('Cubatas personalizados eliminados.');
+    } catch (err) {
+      alert('Error al eliminar cubatas personalizados.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -220,12 +236,20 @@ const Inventory = () => {
     <div className="w-full">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-green-900">Inventario</h1>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold"
-        >
-          Nuevo Producto
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold"
+          >
+            Nuevo Producto
+          </button>
+          <button
+            onClick={cleanCustomCubatas}
+            className="bg-red-100 hover:bg-red-200 text-red-700 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold border border-red-300"
+          >
+            Limpiar Cubatas Personalizados
+          </button>
+        </div>
       </div>
 
       {error && (
