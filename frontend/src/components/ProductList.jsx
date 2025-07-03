@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { getProducts, createProduct } from '../services/roundService';
 import '../mesas-modern.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/api';
+
+async function fetchLiqueurs() {
+  const res = await fetch(`${API_URL}/licores`);
+  return await res.json();
+}
+async function fetchSoftDrinks() {
+  const res = await fetch(`${API_URL}/refrescos`);
+  return await res.json();
+}
+
 function ProductList({ onAddProducts, onCancel }) {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -10,6 +21,12 @@ function ProductList({ onAddProducts, onCancel }) {
   const [showCustomProductModal, setShowCustomProductModal] = useState(false);
   const [customProduct, setCustomProduct] = useState({ name: '', price: '' });
   const [openCategories, setOpenCategories] = useState([]);
+  const [showCubataModal, setShowCubataModal] = useState(false);
+  const [selectedLicor, setSelectedLicor] = useState('');
+  const [selectedRefresco, setSelectedRefresco] = useState('');
+  const [liqueurs, setLiqueurs] = useState([]);
+  const [softDrinks, setSoftDrinks] = useState([]);
+  const [cubataProduct, setCubataProduct] = useState(null);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -17,6 +34,8 @@ function ProductList({ onAddProducts, onCancel }) {
         const productsData = await getProducts();
         console.log('Productos recibidos:', productsData.map(p => ({ nombre: p.name, categoria: p.category })));
         setProducts(productsData);
+        const cubata = productsData.find(p => p.name.toLowerCase() === 'cubata' && p.category === 'Copas');
+        setCubataProduct(cubata || null);
       } catch (err) {
         console.error('Error al cargar productos:', err);
         setError('Error al cargar productos');
@@ -26,6 +45,8 @@ function ProductList({ onAddProducts, onCancel }) {
     };
 
     loadProducts();
+    fetchLiqueurs().then(setLiqueurs);
+    fetchSoftDrinks().then(setSoftDrinks);
   }, []);
 
   const handleQuantityChange = (productId, change) => {
@@ -85,7 +106,9 @@ function ProductList({ onAddProducts, onCancel }) {
   const groupedProducts = products.reduce((acc, product) => {
     const cat = product.category || 'Otros';
     if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(product);
+    if (!(cat === 'Copas' && product.name.toLowerCase() === 'cubata')) {
+      acc[cat].push(product);
+    }
     return acc;
   }, {});
 
@@ -155,6 +178,22 @@ function ProductList({ onAddProducts, onCancel }) {
                 </button>
                 {isOpen && (
                   <div className="mt-2 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {category === 'Copas' && cubataProduct && (
+                      <div
+                        className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 cursor-pointer flex flex-col items-center p-2.5 border-neutral-200 hover:border-green-500 hover:ring-2 hover:ring-green-200`}
+                        onClick={() => setShowCubataModal(true)}
+                      >
+                        {cubataProduct.imageUrl ? (
+                          <img src={cubataProduct.imageUrl} alt="Cubata" className="w-20 h-20 object-cover rounded-xl mb-1" />
+                        ) : (
+                          <div className="w-20 h-20 bg-green-50 flex items-center justify-center rounded-xl mb-1 text-green-200">Sin imagen</div>
+                        )}
+                        <div className="text-center w-full">
+                          <h3 className="text-sm font-semibold text-neutral-900 truncate">Cubata</h3>
+                          <p className="text-green-700 font-bold text-sm">{cubataProduct.price?.toFixed(2) || '5.00'} €</p>
+                        </div>
+                      </div>
+                    )}
                     {prods.map(product => (
                       <div
                         key={product._id}
@@ -317,6 +356,79 @@ function ProductList({ onAddProducts, onCancel }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal de Cubata */}
+      {showCubataModal && cubataProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+            <h2 className="text-2xl font-bold mb-4 text-green-900">Selecciona tu Cubata</h2>
+            <div className="mb-4">
+              <label className="block text-green-900 font-medium mb-2">Licor</label>
+              <select
+                value={selectedLicor}
+                onChange={e => setSelectedLicor(e.target.value)}
+                className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
+              >
+                <option value="">Selecciona un licor</option>
+                {liqueurs.map(l => (
+                  <option key={l._id} value={l.name}>{l.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-green-900 font-medium mb-2">Refresco</label>
+              <select
+                value={selectedRefresco}
+                onChange={e => setSelectedRefresco(e.target.value)}
+                className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
+              >
+                <option value="">Selecciona un refresco</option>
+                {softDrinks.map(s => (
+                  <option key={s._id} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                type="button"
+                onClick={() => { setShowCubataModal(false); setSelectedLicor(''); setSelectedRefresco(''); }}
+                className="px-4 py-2 text-green-700 hover:text-green-900"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!selectedLicor || !selectedRefresco}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50"
+                onClick={() => {
+                  const name = `${selectedLicor} + ${selectedRefresco}`;
+                  const tempId = `cubata-${selectedLicor}-${selectedRefresco}`;
+                  setSelectedProducts(prev => ({
+                    ...prev,
+                    [tempId]: (prev[tempId] || 0) + 1
+                  }));
+                  if (!products.find(p => p._id === tempId)) {
+                    setProducts(prev => [
+                      ...prev,
+                      {
+                        ...cubataProduct,
+                        _id: tempId,
+                        name,
+                        price: cubataProduct.price,
+                        imageUrl: cubataProduct.imageUrl
+                      }
+                    ]);
+                  }
+                  setShowCubataModal(false);
+                  setSelectedLicor('');
+                  setSelectedRefresco('');
+                }}
+              >
+                Añadir
+              </button>
+            </div>
           </div>
         </div>
       )}
