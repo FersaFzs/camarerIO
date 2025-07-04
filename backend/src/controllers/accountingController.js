@@ -1,5 +1,7 @@
 import Round from '../models/Round.js';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import Product from '../models/Product.js';
+import Ticket from '../models/Ticket.js';
 
 export const getDailyStats = async (req, res) => {
   try {
@@ -165,5 +167,17 @@ export const getPreviousMonths = async (req, res) => {
     res.status(200).json(months);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const resetTotalStats = async (req, res) => {
+  try {
+    // Borrar todas las rondas, productos y tickets
+    await Round.deleteMany({});
+    await Product.deleteMany({});
+    await Ticket.deleteMany({});
+    res.status(200).json({ message: 'Reset total realizado correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al hacer reset total', error: error.message });
   }
 }; 

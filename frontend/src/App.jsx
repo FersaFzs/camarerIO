@@ -7,6 +7,7 @@ import Inventory from './pages/admin/Inventory'
 import Settings from './pages/admin/Settings'
 import Login from './pages/Login'
 import PrivateRoute from './components/PrivateRoute'
+import Advanced from './pages/admin/Advanced'
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="accounting" element={<Accounting />} />
         <Route path="inventory" element={<Inventory />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="advanced" element={<Advanced />} />
       </Route>
     </Routes>
   )

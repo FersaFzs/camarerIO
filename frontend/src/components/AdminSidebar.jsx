@@ -64,6 +64,22 @@ function AdminSidebar() {
           </svg>
           <span>Settings</span>
         </NavLink>
+
+        <NavLink
+          to="/admin/advanced"
+          className={({ isActive }) =>
+            `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
+              isActive
+                ? 'bg-green-100 text-green-900 border border-green-300'
+                : 'text-green-700 hover:bg-green-50'
+            }`
+          }
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.07c1.522-.927 3.225.776 2.298 2.298a1.724 1.724 0 001.07 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.07 2.573c.927 1.522-.776 3.225-2.298 2.298a1.724 1.724 0 00-2.573 1.07c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.07c-1.522.927-3.225-.776-2.298-2.298a1.724 1.724 0 00-1.07-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.07-2.573c-.927-1.522.776-3.225 2.298-2.298a1.724 1.724 0 002.573-1.07zM10 13a3 3 0 100-6 3 3 0 000 6z" />
+          </svg>
+          <span>Advanced</span>
+        </NavLink>
       </nav>
 
       <div className="p-4 border-t border-green-100 mt-auto">

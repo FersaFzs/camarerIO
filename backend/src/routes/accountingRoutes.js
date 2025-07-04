@@ -1,5 +1,5 @@
 import express from 'express';
-import { getDailyStats, getMonthlyStats, getPreviousMonths, resetDailyStats } from '../controllers/accountingController.js';
+import { getDailyStats, getMonthlyStats, getPreviousMonths, resetDailyStats, resetTotalStats } from '../controllers/accountingController.js';
 
 const router = express.Router();
 
@@ -22,5 +22,10 @@ router.get('/monthly', getMonthlyStats);
 // @desc    Get statistics for previous months
 // @access  Public
 router.get('/previous-months', getPreviousMonths);
+
+// @route   POST /api/accounting/reset-total
+// @desc    Reset total statistics
+// @access  Public
+router.post('/reset-total', resetTotalStats);
 
 export default router; 
