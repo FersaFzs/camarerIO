@@ -106,6 +106,10 @@ export const updateProductAvailability = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
+    // Emitir evento de socket para notificar a todos los clientes
+    if (req.io) {
+      req.io.emit('products:update', { productId: id, available });
+    }
     res.json(product);
   } catch (error) {
     console.error('Error al actualizar disponibilidad:', error);

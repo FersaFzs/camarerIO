@@ -237,4 +237,19 @@ export const confirmTableService = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+export const cleanTableRounds = async (req, res) => {
+  try {
+    const { tableNumber } = req.params;
+    // Eliminar todas las rondas no pagadas de la mesa
+    const result = await Round.deleteMany({ tableNumber, isPaid: false });
+    // Emitir evento para actualizar en tiempo real
+    if (req.io) {
+      req.io.emit('rounds:update', { tableNumber });
+    }
+    res.json({ message: 'Mesa limpiada correctamente', deletedCount: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al limpiar la mesa', error: error.message });
+  }
 }; 

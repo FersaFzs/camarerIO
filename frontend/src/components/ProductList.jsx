@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getProducts, createProduct } from '../services/roundService';
 import '../mesas-modern.css'
+import io from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/api';
+const SOCKET_URL = 'https://camarerio.onrender.com';
 
 async function fetchLiqueurs() {
   const res = await fetch(`${API_URL}/licores`);
@@ -55,6 +57,15 @@ function ProductList({ onAddProducts, onCancel }) {
     loadProducts();
     fetchLiqueurs().then(setLiqueurs);
     fetchSoftDrinks().then(setSoftDrinks);
+
+    // Socket para productos
+    const socket = io(SOCKET_URL);
+    socket.on('products:update', () => {
+      loadProducts();
+    });
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const handleQuantityChange = (productId, change) => {

@@ -5,8 +5,10 @@ import ProductList from '../components/ProductList'
 import '../mesas-modern.css'
 import TicketView from '../components/TicketView'
 import io from 'socket.io-client'
+import AdvancedMenu from '../components/AdvancedMenu'
 
 const SOCKET_URL = 'https://camarerio.onrender.com'
+const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/api'
 
 function TableDetail() {
   const { tableNumber } = useParams()
@@ -27,6 +29,9 @@ function TableDetail() {
   const [showTicketModal, setShowTicketModal] = useState(false)
   const [currentTicket, setCurrentTicket] = useState(null)
   const [showTicketConfirm, setShowTicketConfirm] = useState(false)
+  const [showCleanConfirm, setShowCleanConfirm] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
+  const [cleanSuccess, setCleanSuccess] = useState(null)
 
   console.log('TableDetail - Número de mesa:', tableNumber)
 
@@ -216,6 +221,29 @@ function TableDetail() {
     } catch (err) {
       console.error('Error al procesar el pago selectivo:', err)
       setError('Error al procesar el pago selectivo')
+    }
+  }
+
+  const handleCleanTable = async () => {
+    setCleaning(true)
+    try {
+      const res = await fetch(`${API_URL}/rounds/table/${tableNumber}/clean`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setCleanSuccess('Mesa limpiada correctamente')
+        await loadTableRounds()
+      } else {
+        setError(data.message || 'Error al limpiar la mesa')
+      }
+    } catch (err) {
+      setError('Error al limpiar la mesa')
+    } finally {
+      setCleaning(false)
+      setShowCleanConfirm(false)
+      setTimeout(() => setCleanSuccess(null), 2000)
     }
   }
 
@@ -514,6 +542,49 @@ function TableDetail() {
             onClose={() => setShowTicketModal(false)}
             autoPrint={true}
           />
+        </div>
+      )}
+
+      {/* Menú de opciones avanzadas */}
+      <div className="absolute top-4 right-4 z-40">
+        <AdvancedMenu
+          options={[{
+            label: 'Limpiar mesa',
+            onClick: () => setShowCleanConfirm(true),
+            disabled: isLoading || rounds.length === 0
+          }]}
+        />
+      </div>
+
+      {/* Modal de confirmación para limpiar mesa */}
+      {showCleanConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+            <h2 className="text-xl font-bold text-green-900 mb-4">¿Limpiar mesa?</h2>
+            <p className="mb-6 text-green-800">Se eliminarán todas las rondas no pagadas de esta mesa. ¿Seguro que quieres continuar?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowCleanConfirm(false)}
+                className="px-4 py-2 text-green-700 hover:text-green-900"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCleanTable}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold disabled:opacity-50"
+                disabled={cleaning}
+              >
+                {cleaning ? 'Limpiando...' : 'Limpiar mesa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensaje de éxito */}
+      {cleanSuccess && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium">
+          {cleanSuccess}
         </div>
       )}
     </div>
