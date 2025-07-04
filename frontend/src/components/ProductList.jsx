@@ -19,7 +19,7 @@ function ProductList({ onAddProducts, onCancel }) {
   const [error, setError] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState({});
   const [showCustomProductModal, setShowCustomProductModal] = useState(false);
-  const [customProduct, setCustomProduct] = useState({ name: '', price: '' });
+  const [customProduct, setCustomProduct] = useState({ name: '', price: '', category: 'Otros' });
   const [openCategories, setOpenCategories] = useState([]);
   const [showCubataModal, setShowCubataModal] = useState(false);
   const [selectedLicor, setSelectedLicor] = useState('');
@@ -27,6 +27,14 @@ function ProductList({ onAddProducts, onCancel }) {
   const [liqueurs, setLiqueurs] = useState([]);
   const [softDrinks, setSoftDrinks] = useState([]);
   const [cubataProduct, setCubataProduct] = useState(null);
+
+  const categoryOptions = [
+    'Cervezas',
+    'Refrescos',
+    'Copas',
+    'Cafés',
+    'Otros'
+  ];
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -103,12 +111,12 @@ function ProductList({ onAddProducts, onCancel }) {
     try {
       const newProduct = await createProduct({
         name: customProduct.name,
-        price: parseFloat(customProduct.price)
+        price: parseFloat(customProduct.price),
+        category: customProduct.category
       });
-      
       setProducts(prev => [...prev, newProduct]);
       setShowCustomProductModal(false);
-      setCustomProduct({ name: '', price: '' });
+      setCustomProduct({ name: '', price: '', category: 'Otros' });
     } catch (err) {
       console.error('Error al crear producto personalizado:', err);
       setError('Error al crear el producto personalizado');
@@ -385,6 +393,22 @@ function ProductList({ onAddProducts, onCancel }) {
                   step="0.01"
                   required
                 />
+              </div>
+              <div>
+                <label htmlFor="customProductCategory" className="block text-sm font-medium text-green-900 mb-1">
+                  Categoría
+                </label>
+                <select
+                  id="customProductCategory"
+                  value={customProduct.category}
+                  onChange={e => setCustomProduct(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 capitalize"
+                  required
+                >
+                  {categoryOptions.map(opt => (
+                    <option key={opt} value={opt} className="capitalize">{opt}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex justify-end gap-4">
                 <button
