@@ -374,11 +374,11 @@ function ProductList({ onAddProducts, onCancel }) {
       {/* Modal de producto personalizado */}
       {showCustomProductModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h2 className="text-2xl font-bold mb-4 text-green-900">Nuevo Producto</h2>
-            <form onSubmit={handleCustomProductSubmit} className="space-y-6">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh] border border-green-100">
+            <h2 className="text-2xl font-extrabold mb-6 text-green-900 text-center tracking-tight">Nuevo Producto</h2>
+            <form onSubmit={handleCustomProductSubmit} className="space-y-7">
               <div>
-                <label htmlFor="customProductName" className="block text-sm font-medium text-green-900 mb-1">
+                <label htmlFor="customProductName" className="block text-base font-semibold text-green-800 mb-2 tracking-tight">
                   Nombre del producto
                 </label>
                 <input
@@ -386,14 +386,14 @@ function ProductList({ onAddProducts, onCancel }) {
                   id="customProductName"
                   value={customProduct.name}
                   onChange={e => setCustomProduct(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full border border-green-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50 text-green-900 placeholder-green-300 text-base font-medium shadow-sm"
                   placeholder="Ej: Café especial"
                   required
                   autoFocus
                 />
               </div>
               <div>
-                <label htmlFor="customProductPrice" className="block text-sm font-medium text-green-900 mb-1">
+                <label htmlFor="customProductPrice" className="block text-base font-semibold text-green-800 mb-2 tracking-tight">
                   Precio (€)
                 </label>
                 <input
@@ -401,7 +401,7 @@ function ProductList({ onAddProducts, onCancel }) {
                   id="customProductPrice"
                   value={customProduct.price}
                   onChange={e => setCustomProduct(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full border border-green-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50 text-green-900 placeholder-green-300 text-base font-medium shadow-sm"
                   placeholder="Ej: 2.50"
                   min="0"
                   step="0.01"
@@ -409,32 +409,35 @@ function ProductList({ onAddProducts, onCancel }) {
                 />
               </div>
               <div>
-                <label htmlFor="customProductCategory" className="block text-sm font-medium text-green-900 mb-1">
+                <label htmlFor="customProductCategory" className="block text-base font-semibold text-green-800 mb-2 tracking-tight">
                   Categoría
                 </label>
-                <select
-                  id="customProductCategory"
-                  value={customProduct.category}
-                  onChange={e => setCustomProduct(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 capitalize"
-                  required
-                >
-                  {categoryOptions.map(opt => (
-                    <option key={opt} value={opt} className="capitalize">{opt}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="customProductCategory"
+                    value={customProduct.category}
+                    onChange={e => setCustomProduct(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full border border-green-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50 text-green-900 capitalize text-base font-medium shadow-sm appearance-none"
+                    required
+                  >
+                    {categoryOptions.map(opt => (
+                      <option key={opt} value={opt} className="capitalize">{opt}</option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-green-400 text-lg">▼</span>
+                </div>
               </div>
-              <div className="flex justify-end gap-4">
+              <div className="flex justify-end gap-4 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCustomProductModal(false)}
-                  className="px-4 py-2 text-green-700 hover:text-green-900"
+                  className="px-4 py-2 text-green-700 hover:text-green-900 font-semibold rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-md"
                 >
                   Crear Producto
                 </button>

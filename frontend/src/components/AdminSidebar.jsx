@@ -12,18 +12,18 @@ function AdminSidebar() {
 
   return (
     <div className="fixed top-0 left-0 h-screen bg-white text-green-900 w-64 flex flex-col shadow-lg border-r border-green-100 font-inter z-40">
-      <div className="p-6 border-b border-green-100 flex flex-col items-center">
+      <div className="p-6 border-b border-green-100 flex flex-col items-center bg-green-50">
         <img src={logoApalanque} alt="Logo" className="h-32 object-contain" style={{ maxWidth: 220 }} />
       </div>
       
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto bg-white">
         <NavLink
           to="/admin/accounting"
           className={({ isActive }) =>
             `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
               isActive
-                ? 'bg-green-100 text-green-900 border border-green-300'
-                : 'text-green-700 hover:bg-green-50'
+                ? 'bg-green-600 text-white border border-green-700 shadow'
+                : 'text-green-800 hover:bg-green-100 hover:text-green-900'
             }`
           }
         >
@@ -38,8 +38,8 @@ function AdminSidebar() {
           className={({ isActive }) =>
             `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
               isActive
-                ? 'bg-green-100 text-green-900 border border-green-300'
-                : 'text-green-700 hover:bg-green-50'
+                ? 'bg-green-600 text-white border border-green-700 shadow'
+                : 'text-green-800 hover:bg-green-100 hover:text-green-900'
             }`
           }
         >
@@ -54,8 +54,8 @@ function AdminSidebar() {
           className={({ isActive }) =>
             `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
               isActive
-                ? 'bg-green-100 text-green-900 border border-green-300'
-                : 'text-green-700 hover:bg-green-50'
+                ? 'bg-green-600 text-white border border-green-700 shadow'
+                : 'text-green-800 hover:bg-green-100 hover:text-green-900'
             }`
           }
         >
@@ -70,8 +70,8 @@ function AdminSidebar() {
           className={({ isActive }) =>
             `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
               isActive
-                ? 'bg-green-100 text-green-900 border border-green-300'
-                : 'text-green-700 hover:bg-green-50'
+                ? 'bg-green-600 text-white border border-green-700 shadow'
+                : 'text-green-800 hover:bg-green-100 hover:text-green-900'
             }`
           }
         >
@@ -82,10 +82,10 @@ function AdminSidebar() {
         </NavLink>
       </nav>
 
-      <div className="p-4 border-t border-green-100 mt-auto">
+      <div className="p-4 border-t border-green-100 mt-auto bg-green-50">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-2 p-3 rounded-xl text-green-700 hover:bg-green-50 transition-colors font-semibold"
+          className="w-full flex items-center space-x-2 p-3 rounded-xl text-green-700 hover:bg-green-100 hover:text-green-900 transition-colors font-semibold"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clipRule="evenodd" />

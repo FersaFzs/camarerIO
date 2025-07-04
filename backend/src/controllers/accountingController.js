@@ -40,19 +40,11 @@ export const getDailyStats = async (req, res) => {
 
 export const resetDailyStats = async (req, res) => {
   try {
-    const today = new Date();
-    const startOfToday = startOfDay(today);
-    const endOfToday = endOfDay(today);
-
-    // Actualizar todas las rondas pagadas hoy para marcarlas como "archivadas"
+    // Actualizar todas las rondas pagadas para marcarlas como "archivadas"
     await Round.updateMany(
       {
         isPaid: true,
-        archived: { $ne: true },
-        paidAt: {
-          $gte: startOfToday,
-          $lte: endOfToday
-        }
+        archived: { $ne: true }
       },
       {
         $set: { archived: true }
