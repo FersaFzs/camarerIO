@@ -168,9 +168,10 @@ function ProductList({ onAddProducts, onCancel }) {
     setSelectedRefresco('');
   };
 
-  // Agrupar productos por categoría
+  // Agrupar productos por categoría, excluyendo 'Tapas'
   const groupedProducts = products.reduce((acc, product) => {
     const cat = product.category || 'Otros';
+    if (cat === 'Tapas') return acc; // Omitir tapas
     if (!acc[cat]) acc[cat] = [];
     if (!(cat === 'Copas' && product.name.toLowerCase() === 'cubata')) {
       acc[cat].push(product);
