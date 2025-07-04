@@ -18,7 +18,7 @@ export const getDailyStats = async (req, res) => {
     // Calcular el total correctamente usando los precios de los productos
     const total = dailyRounds.reduce((sum, round) => {
       const roundTotal = round.products.reduce((roundSum, item) => {
-        return roundSum + (item.product?.price || 0) * item.quantity;
+        return roundSum + (item.price || 0) * item.quantity;
       }, 0);
       return sum + roundTotal;
     }, 0);
@@ -86,7 +86,7 @@ export const getMonthlyStats = async (req, res) => {
     // Calcular el total correctamente sumando los productos de cada ronda
     const total = monthlyRounds.reduce((sum, round) => {
       const roundTotal = round.products.reduce((roundSum, item) => {
-        return roundSum + (item.product?.price || 0) * item.quantity;
+        return roundSum + (item.price || 0) * item.quantity;
       }, 0);
       return sum + roundTotal;
     }, 0);
@@ -104,7 +104,7 @@ export const getMonthlyStats = async (req, res) => {
       }
       // Sumar los productos de la ronda
       const roundTotal = round.products.reduce((roundSum, item) => {
-        return roundSum + (item.product?.price || 0) * item.quantity;
+        return roundSum + (item.price || 0) * item.quantity;
       }, 0);
       acc[day].total += roundTotal;
       acc[day].roundCount += 1;
@@ -147,7 +147,7 @@ export const getPreviousMonths = async (req, res) => {
       // Calcular el total correctamente sumando los productos de cada ronda
       const total = monthlyRounds.reduce((sum, round) => {
         const roundTotal = round.products.reduce((roundSum, item) => {
-          return roundSum + (item.product?.price || 0) * item.quantity;
+          return roundSum + (item.price || 0) * item.quantity;
         }, 0);
         return sum + roundTotal;
       }, 0);

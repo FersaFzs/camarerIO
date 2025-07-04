@@ -32,7 +32,18 @@ export const getTableRounds = async (req, res) => {
 export const createRound = async (req, res) => {
   try {
     const { tableNumber, products } = req.body
-    const round = new Round({ tableNumber, products })
+    // Enriquecer productos con nombre y precio actuales
+    const enrichedProducts = await Promise.all(products.map(async (item) => {
+      const prod = await Product.findById(item.product);
+      return {
+        product: item.product,
+        quantity: item.quantity,
+        combination: item.combination,
+        name: prod ? prod.name : item.name || '',
+        price: prod ? prod.price : item.price || 0
+      };
+    }));
+    const round = new Round({ tableNumber, products: enrichedProducts })
     await round.save()
     await round.populate('products.product')
     // Emitir evento
@@ -49,12 +60,21 @@ export const addProductsToRound = async (req, res) => {
     const { roundId } = req.params
     const { products } = req.body
     const round = await Round.findById(roundId)
-    
     if (!round) {
       return res.status(404).json({ message: 'Ronda no encontrada' })
     }
-
-    round.products.push(...products)
+    // Enriquecer productos con nombre y precio actuales
+    const enrichedProducts = await Promise.all(products.map(async (item) => {
+      const prod = await Product.findById(item.product);
+      return {
+        product: item.product,
+        quantity: item.quantity,
+        combination: item.combination,
+        name: prod ? prod.name : item.name || '',
+        price: prod ? prod.price : item.price || 0
+      };
+    }));
+    round.products.push(...enrichedProducts)
     await round.save()
     await round.populate('products.product')
     // Emitir evento
@@ -166,18 +186,25 @@ export const updateRoundProducts = async (req, res) => {
   try {
     const { roundId } = req.params
     const { products } = req.body
-
     const round = await Round.findById(roundId)
     if (!round) {
       return res.status(404).json({ message: 'Ronda no encontrada' })
     }
-
-    round.products = products
+    // Enriquecer productos con nombre y precio actuales
+    const enrichedProducts = await Promise.all(products.map(async (item) => {
+      const prod = await Product.findById(item.product);
+      return {
+        product: item.product,
+        quantity: item.quantity,
+        combination: item.combination,
+        name: prod ? prod.name : item.name || '',
+        price: prod ? prod.price : item.price || 0
+      };
+    }));
+    round.products = enrichedProducts
     await round.save()
-
     const populatedRound = await Round.findById(roundId)
       .populate('products.product')
-
     res.status(200).json(populatedRound)
   } catch (error) {
     console.error('Error al actualizar productos de la ronda:', error)

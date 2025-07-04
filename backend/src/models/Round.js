@@ -19,6 +19,14 @@ const roundSchema = new mongoose.Schema({
     combination: {
       type: String,
       required: false
+    },
+    name: {
+      type: String,
+      required: false
+    },
+    price: {
+      type: Number,
+      required: false
     }
   }],
   total: {
