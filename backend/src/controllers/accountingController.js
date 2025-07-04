@@ -81,6 +81,7 @@ export const getMonthlyStats = async (req, res) => {
 
     const monthlyRounds = await Round.find({
       isPaid: true,
+      archived: { $ne: true },
       paidAt: {
         $gte: startDate,
         $lte: endDate
@@ -142,6 +143,7 @@ export const getPreviousMonths = async (req, res) => {
 
       const monthlyRounds = await Round.find({
         isPaid: true,
+        archived: { $ne: true },
         paidAt: {
           $gte: startDate,
           $lte: endDate
