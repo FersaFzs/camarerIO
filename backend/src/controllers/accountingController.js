@@ -9,6 +9,7 @@ export const getDailyStats = async (req, res) => {
 
     const dailyRounds = await Round.find({
       isPaid: true,
+      archived: { $ne: true },
       paidAt: {
         $gte: startOfToday,
         $lte: endOfToday
@@ -45,6 +46,7 @@ export const resetDailyStats = async (req, res) => {
     await Round.updateMany(
       {
         isPaid: true,
+        archived: { $ne: true },
         paidAt: {
           $gte: startOfToday,
           $lte: endOfToday

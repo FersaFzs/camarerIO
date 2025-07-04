@@ -6,6 +6,8 @@ import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import router from './routes/index.js'
 import { createTestUser } from './controllers/authController.js'
+import cron from 'node-cron'
+import { resetDailyStats } from './controllers/accountingController.js'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -75,6 +77,16 @@ io.on('connection', (socket) => {
     console.log('Cliente desconectado:', socket.id)
   })
 })
+
+// Programar el reseteo diario a las 5am
+cron.schedule('0 5 * * *', async () => {
+  try {
+    await resetDailyStats({},{ status: () => ({ json: () => {} }) });
+    console.log('Reseteo diario ejecutado automáticamente a las 5am');
+  } catch (err) {
+    console.error('Error en el reseteo diario automático:', err);
+  }
+});
 
 // Puerto
 const PORT = process.env.PORT || 5000

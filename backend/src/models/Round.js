@@ -49,6 +49,10 @@ const roundSchema = new mongoose.Schema({
   isServiceConfirmed: {
     type: Boolean,
     default: false
+  },
+  archived: {
+    type: Boolean,
+    default: false
   }
 })
 
