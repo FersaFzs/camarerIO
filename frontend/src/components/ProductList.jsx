@@ -35,6 +35,7 @@ function ProductList({ onAddProducts, onCancel }) {
     'Refrescos',
     'Copas',
     'Cafés',
+    'Tapas',
     'Otros'
   ];
 
@@ -227,18 +228,24 @@ function ProductList({ onAddProducts, onCancel }) {
         <div className="flex flex-col gap-2">
           {Object.entries(groupedProducts).map(([category, prods]) => {
             const isOpen = openCategories.includes(category);
+            const isTapas = category === 'Tapas';
             return (
               <div key={category} className="mb-1">
                 <button
                   type="button"
-                  className={`w-full flex items-center justify-between px-3 py-3 bg-green-50 rounded-xl shadow-sm border border-green-100 text-green-900 font-bold text-lg capitalize transition-colors focus:outline-none ${isOpen ? 'bg-green-100' : ''}`}
+                  className={`w-full flex items-center justify-between px-3 py-3 rounded-xl shadow-sm border font-bold text-lg capitalize transition-colors focus:outline-none ${isTapas ? 'bg-yellow-50 border-yellow-200 text-yellow-900' : 'bg-green-50 border-green-100 text-green-900'} ${isOpen ? (isTapas ? 'bg-yellow-100' : 'bg-green-100') : ''}`}
                   onClick={() => setOpenCategories(prev =>
                     prev.includes(category)
                       ? prev.filter(c => c !== category)
                       : [...prev, category]
                   )}
                 >
-                  <span>{category}</span>
+                  <span className="flex items-center gap-2">
+                    {isTapas && (
+                      <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 01.993.883L11 3v2.382l2.447 1.632a1 1 0 01.553.894V10a6 6 0 11-8 0V8.809a1 1 0 01.553-.894L9 5.382V3a1 1 0 011-1zm0 2.618l-2 1.334V10a4 4 0 108 0V5.952l-2-1.334V10a2 2 0 11-4 0V4.618z" /></svg>
+                    )}
+                    {category}
+                  </span>
                   <span className={`ml-2 transition-transform ${isOpen ? 'rotate-90' : ''}`}>▶</span>
                 </button>
                 {isOpen && (

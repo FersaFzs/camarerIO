@@ -36,12 +36,12 @@ export default function AdvancedMenu({ options = [] }) {
       {open && (
         <div className="absolute right-0 mt-2 w-48 bg-white border border-green-100 rounded-xl shadow-lg z-50">
           {options.length === 0 ? (
-            <div className="px-4 py-3 text-green-700 text-sm">Sin opciones</div>
+            <div className="px-4 py-3 text-green-700 text-sm bg-white rounded-xl">Sin opciones</div>
           ) : (
             options.map((opt, idx) => (
               <button
                 key={idx}
-                className="w-full text-left px-4 py-3 hover:bg-green-50 text-green-900 text-sm font-medium rounded-xl transition-colors"
+                className="w-full text-left px-4 py-3 bg-white hover:bg-green-50 text-green-900 text-base font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-green-300 disabled:text-green-300 disabled:bg-white"
                 onClick={() => { setOpen(false); opt.onClick && opt.onClick(); }}
                 disabled={opt.disabled}
               >

@@ -49,6 +49,15 @@ const Inventory = () => {
   const [softDrinkMsg, setSoftDrinkMsg] = useState(null);
   const [showCombinados, setShowCombinados] = useState(false);
 
+  const categoryOptions = [
+    'Cervezas',
+    'Refrescos',
+    'Copas',
+    'Cafés',
+    'Tapas',
+    'Otros'
+  ];
+
   useEffect(() => {
     loadProducts();
     fetchLiqueurs().then(setLiqueurs);
@@ -381,11 +390,9 @@ const Inventory = () => {
                   className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50 text-green-900 font-semibold capitalize"
                   required
                 >
-                  <option value="Cervezas">Cervezas</option>
-                  <option value="Refrescos">Refrescos</option>
-                  <option value="Copas">Copas</option>
-                  <option value="Cafés">Cafés</option>
-                  <option value="Otros">Otros</option>
+                  {categoryOptions.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
               <div>
