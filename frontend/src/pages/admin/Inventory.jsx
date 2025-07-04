@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '../../services/productService';
+import { getProducts, createProduct, updateProduct, deleteProduct, updateProductAvailability } from '../../services/productService';
 import '../../mesas-modern.css'
 
 // NUEVO: servicios para licores y refrescos
@@ -209,6 +209,16 @@ const Inventory = () => {
     }
   };
 
+  const handleToggleAvailability = async (product) => {
+    try {
+      await updateProductAvailability(product._id, !product.available);
+      setProducts(prev => prev.map(p => p._id === product._id ? { ...p, available: !p.available } : p));
+    } catch (err) {
+      setError('Error al cambiar la disponibilidad');
+      console.error(err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -259,6 +269,15 @@ const Inventory = () => {
                   currency: 'EUR'
                 }).format(product.price)}
               </p>
+              <div className="flex justify-between items-center mb-4">
+                <span className={`text-sm font-semibold px-3 py-1 rounded-full ${product.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{product.available ? 'Disponible' : 'No disponible'}</span>
+                <button
+                  onClick={() => handleToggleAvailability(product)}
+                  className={`ml-2 px-3 py-1 rounded-full font-bold text-xs transition-colors shadow ${product.available ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-400 text-white hover:bg-red-500'}`}
+                >
+                  {product.available ? 'Marcar no disponible' : 'Marcar disponible'}
+                </button>
+              </div>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => handleOpenModal(product)}

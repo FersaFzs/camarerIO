@@ -89,4 +89,26 @@ export const deleteProduct = async (req, res) => {
       error: error.message 
     });
   }
+};
+
+export const updateProductAvailability = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { available } = req.body;
+    if (typeof available !== 'boolean') {
+      return res.status(400).json({ message: 'El campo available debe ser booleano' });
+    }
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { available },
+      { new: true }
+    );
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+    res.json(product);
+  } catch (error) {
+    console.error('Error al actualizar disponibilidad:', error);
+    res.status(400).json({ message: 'Error al actualizar disponibilidad', error: error.message });
+  }
 }; 

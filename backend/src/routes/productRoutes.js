@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
+import { getProducts, createProduct, updateProduct, deleteProduct, updateProductAvailability } from '../controllers/productController.js';
 import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
@@ -23,5 +23,10 @@ router.put('/:id', upload.single('image'), updateProduct);
 // @desc    Delete a product
 // @access  Public
 router.delete('/:id', deleteProduct);
+
+// @route   PUT /api/products/:id/availability
+// @desc    Update product availability
+// @access  Public
+router.put('/:id/availability', updateProductAvailability);
 
 export default router; 

@@ -18,6 +18,10 @@ const productSchema = new mongoose.Schema({
     enum: ['Cervezas', 'Refrescos', 'Copas', 'Cafés', 'Otros'],
     required: true,
     default: 'Otros'
+  },
+  available: {
+    type: Boolean,
+    default: true
   }
 })
 

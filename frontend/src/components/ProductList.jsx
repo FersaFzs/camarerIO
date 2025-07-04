@@ -251,8 +251,8 @@ function ProductList({ onAddProducts, onCancel }) {
                     {prods.map(product => (
                       <div
                         key={product._id}
-                        className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 cursor-pointer flex flex-col items-center p-2.5 ${selectedProducts[product._id] ? 'border-green-500 ring-2 ring-green-200' : 'border-neutral-200'}`}
-                        onClick={() => handleQuantityChange(product._id, 1)}
+                        className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 flex flex-col items-center p-2.5 ${selectedProducts[product._id] ? 'border-green-500 ring-2 ring-green-200' : 'border-neutral-200'} ${!product.available ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                        onClick={product.available ? () => handleQuantityChange(product._id, 1) : undefined}
                       >
                         {product.imageUrl ? (
                           <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-xl mb-1" />
@@ -262,6 +262,9 @@ function ProductList({ onAddProducts, onCancel }) {
                         <div className="text-center w-full">
                           <h3 className="text-sm font-semibold text-neutral-900 truncate">{product.name}</h3>
                           <p className="text-green-700 font-bold text-sm">{product.price.toFixed(2)} €</p>
+                          {!product.available && (
+                            <span className="absolute top-2 left-2 bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full shadow">No disponible</span>
+                          )}
                         </div>
                         {selectedProducts[product._id] > 0 && (
                           <div className="absolute top-1 right-1 bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-base font-bold shadow">
