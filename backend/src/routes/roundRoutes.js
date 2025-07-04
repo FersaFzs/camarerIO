@@ -8,7 +8,8 @@ import {
   getTableStatuses,
   updateRoundProducts,
   confirmTableService,
-  cleanTableRounds
+  cleanTableRounds,
+  moveTableRounds
 } from '../controllers/roundController.js'
 
 const router = Router()
@@ -22,5 +23,6 @@ router.get('/statuses', getTableStatuses)
 router.put('/:roundId', updateRoundProducts)
 router.put('/table/:tableNumber/confirm-service', confirmTableService)
 router.delete('/table/:tableNumber/clean', cleanTableRounds)
+router.post('/table/:fromTableNumber/move', moveTableRounds)
 
 export default router 

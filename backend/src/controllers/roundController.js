@@ -252,4 +252,32 @@ export const cleanTableRounds = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error al limpiar la mesa', error: error.message });
   }
+};
+
+export const moveTableRounds = async (req, res) => {
+  try {
+    const { fromTableNumber } = req.params;
+    const { toTableNumber } = req.body;
+    if (!toTableNumber) {
+      return res.status(400).json({ message: 'Debes indicar la mesa destino' });
+    }
+    // Buscar todas las rondas no pagadas de la mesa origen
+    const rounds = await Round.find({ tableNumber: fromTableNumber, isPaid: false });
+    if (rounds.length === 0) {
+      return res.status(404).json({ message: 'No hay rondas activas para mover' });
+    }
+    // Actualizar el número de mesa en todas las rondas
+    await Round.updateMany(
+      { tableNumber: fromTableNumber, isPaid: false },
+      { $set: { tableNumber: toTableNumber } }
+    );
+    // Emitir evento para ambas mesas
+    if (req.io) {
+      req.io.emit('rounds:update', { tableNumber: fromTableNumber });
+      req.io.emit('rounds:update', { tableNumber: toTableNumber });
+    }
+    res.json({ message: 'Rondas movidas correctamente', movedCount: rounds.length });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al mover las rondas', error: error.message });
+  }
 }; 

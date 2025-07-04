@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, markAllRoundsAsPaid, updateRoundProducts, confirmTableService, generateTicket } from '../services/roundService'
+import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, markAllRoundsAsPaid, updateRoundProducts, confirmTableService, generateTicket, fetchTableStatuses, fetchCustomTables } from '../services/roundService'
 import ProductList from '../components/ProductList'
 import '../mesas-modern.css'
 import TicketView from '../components/TicketView'
@@ -32,6 +32,12 @@ function TableDetail() {
   const [showCleanConfirm, setShowCleanConfirm] = useState(false)
   const [cleaning, setCleaning] = useState(false)
   const [cleanSuccess, setCleanSuccess] = useState(null)
+  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [moveLoading, setMoveLoading] = useState(false)
+  const [moveSuccess, setMoveSuccess] = useState(null)
+  const [moveError, setMoveError] = useState(null)
+  const [availableTables, setAvailableTables] = useState([])
+  const [selectedTable, setSelectedTable] = useState('')
 
   console.log('TableDetail - Número de mesa:', tableNumber)
 
@@ -247,6 +253,66 @@ function TableDetail() {
     }
   }
 
+  const openMoveModal = async () => {
+    setMoveError(null)
+    setSelectedTable('')
+    setShowMoveModal(true)
+    setMoveLoading(true)
+    try {
+      const statuses = await fetchTableStatuses()
+      const customTables = await fetchCustomTables()
+      const occupied = new Set(statuses.filter(s => s.status === 'occupied' || s.status === 'serving').map(s => s.tableNumber.toString())
+      )
+      // Mesas numeradas (1-10)
+      const tables = []
+      for (let i = 1; i <= 10; i++) {
+        if (!occupied.has(i.toString()) && i.toString() !== tableNumber) {
+          tables.push({ number: i, label: `Mesa ${i}` })
+        }
+      }
+      // Mesas personalizadas
+      customTables.forEach(t => {
+        if (!occupied.has(t.number.toString()) && t.number.toString() !== tableNumber) {
+          tables.push({ number: t.number, label: t.name || `Mesa ${t.number}` })
+        }
+      })
+      setAvailableTables(tables)
+    } catch (err) {
+      setMoveError('Error al cargar mesas disponibles')
+    } finally {
+      setMoveLoading(false)
+    }
+  }
+
+  const handleMoveTable = async () => {
+    if (!selectedTable) return
+    setMoveLoading(true)
+    setMoveError(null)
+    try {
+      const res = await fetch(`${API_URL}/rounds/table/${tableNumber}/move`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ toTableNumber: selectedTable })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setMoveSuccess('Mesa cambiada correctamente')
+        setShowMoveModal(false)
+        setTimeout(() => setMoveSuccess(null), 2000)
+        navigate(`/mesas/${selectedTable}`)
+      } else {
+        setMoveError(data.message || 'Error al cambiar de mesa')
+      }
+    } catch (err) {
+      setMoveError('Error al cambiar de mesa')
+    } finally {
+      setMoveLoading(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -293,6 +359,10 @@ function TableDetail() {
               options={[{
                 label: 'Limpiar mesa',
                 onClick: () => setShowCleanConfirm(true),
+                disabled: isLoading || rounds.length === 0
+              }, {
+                label: 'Cambiar de mesa',
+                onClick: openMoveModal,
                 disabled: isLoading || rounds.length === 0
               }]}
             />
@@ -584,6 +654,55 @@ function TableDetail() {
       {cleanSuccess && (
         <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium">
           {cleanSuccess}
+        </div>
+      )}
+
+      {/* Modal para cambiar de mesa */}
+      {showMoveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+            <h2 className="text-xl font-bold text-green-900 mb-4">Cambiar de mesa</h2>
+            <p className="mb-4 text-green-800">Selecciona una mesa libre a la que mover todos los productos y rondas.</p>
+            {moveLoading ? (
+              <div className="text-center text-green-700">Cargando mesas disponibles...</div>
+            ) : availableTables.length === 0 ? (
+              <div className="text-center text-red-600">No hay mesas libres disponibles.</div>
+            ) : (
+              <select
+                className="w-full border border-green-200 rounded-lg px-4 py-2 mb-6 focus:ring-2 focus:ring-green-500 focus:border-green-500 capitalize"
+                value={selectedTable}
+                onChange={e => setSelectedTable(e.target.value)}
+              >
+                <option value="">Selecciona una mesa</option>
+                {availableTables.map(t => (
+                  <option key={t.number} value={t.number}>{t.label}</option>
+                ))}
+              </select>
+            )}
+            {moveError && <div className="text-red-600 mb-2 text-sm">{moveError}</div>}
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowMoveModal(false)}
+                className="px-4 py-2 text-green-700 hover:text-green-900"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleMoveTable}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50"
+                disabled={!selectedTable || moveLoading}
+              >
+                {moveLoading ? 'Cambiando...' : 'Cambiar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensaje de éxito al cambiar mesa */}
+      {moveSuccess && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium">
+          {moveSuccess}
         </div>
       )}
     </div>
