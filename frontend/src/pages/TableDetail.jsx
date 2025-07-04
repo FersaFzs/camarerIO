@@ -277,8 +277,8 @@ function TableDetail() {
   return (
     <div className="min-h-screen w-full bg-neutral-50 font-inter flex flex-col items-center justify-start">
       {/* Cabecera minimalista */}
-      <div className="w-full max-w-3xl mx-auto pt-8 pb-2 flex flex-col items-center">
-        <div className="w-full rounded-2xl bg-green-50 border border-green-100 shadow-sm flex justify-between items-center mb-8 px-6 py-5">
+      <div className="w-full max-w-3xl mx-auto pt-8 pb-2 flex flex-col items-center relative">
+        <div className="w-full rounded-2xl bg-green-50 border border-green-100 shadow-sm flex justify-between items-center mb-8 px-6 py-5 relative">
           <button
             onClick={() => navigate('/mesas')}
             className="text-green-700 hover:bg-green-100 hover:text-green-900 text-base font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
@@ -286,7 +286,16 @@ function TableDetail() {
             ← Volver
           </button>
           <span className="text-2xl font-bold text-green-900 tracking-tight">Mesa {tableNumber}</span>
-          <span className="w-24" />
+          {/* Menú de opciones avanzadas en la cabecera */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <AdvancedMenu
+              options={[{
+                label: 'Limpiar mesa',
+                onClick: () => setShowCleanConfirm(true),
+                disabled: isLoading || rounds.length === 0
+              }]}
+            />
+          </div>
         </div>
       </div>
       {/* Contenido principal */}
@@ -544,17 +553,6 @@ function TableDetail() {
           />
         </div>
       )}
-
-      {/* Menú de opciones avanzadas */}
-      <div className="absolute top-4 right-4 z-40">
-        <AdvancedMenu
-          options={[{
-            label: 'Limpiar mesa',
-            onClick: () => setShowCleanConfirm(true),
-            disabled: isLoading || rounds.length === 0
-          }]}
-        />
-      </div>
 
       {/* Modal de confirmación para limpiar mesa */}
       {showCleanConfirm && (
