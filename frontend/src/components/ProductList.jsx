@@ -3,7 +3,7 @@ import { getProducts, createProduct } from '../services/roundService';
 import '../mesas-modern.css'
 import io from 'socket.io-client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com';
 const SOCKET_URL = 'https://camarerio.onrender.com';
 
 async function fetchLiqueurs() {
@@ -29,15 +29,31 @@ function ProductList({ onAddProducts, onCancel }) {
   const [liqueurs, setLiqueurs] = useState([]);
   const [softDrinks, setSoftDrinks] = useState([]);
   const [cubataProduct, setCubataProduct] = useState(null);
+  const [showSelectedProducts, setShowSelectedProducts] = useState(false);
 
   const categoryOptions = [
     'Cervezas',
-    'Refrescos',
+    'Refrescos', 
     'Copas',
     'Cafés',
-    'Tapas',
+    'Vinos',
+    'Helados',
     'Otros'
   ];
+
+  // Sistema de colores por categoría
+  const getCategoryStyle = (category) => {
+    const styles = {
+      'Cervezas': { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', hover: 'hover:bg-green-100', icon: '🍺' },
+      'Refrescos': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', hover: 'hover:bg-blue-100', icon: '🥤' },
+      'Copas': { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900', hover: 'hover:bg-purple-100', icon: '🍷' },
+      'Cafés': { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900', hover: 'hover:bg-amber-100', icon: '☕' },
+      'Vinos': { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-900', hover: 'hover:bg-red-100', icon: '🍷' },
+      'Helados': { bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-900', hover: 'hover:bg-pink-100', icon: '🍦' },
+      'Otros': { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-900', hover: 'hover:bg-gray-100', icon: '📦' }
+    };
+    return styles[category] || styles['Otros'];
+  };
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -212,58 +228,123 @@ function ProductList({ onAddProducts, onCancel }) {
     return product ? { ...product, quantity } : null;
   }).filter(Boolean);
 
+  const selectedCount = selectedList.length;
+  const totalPrice = getTotalPrice();
+
   return (
     <div className="fixed inset-0 bg-neutral-50 flex flex-col font-inter z-50 overflow-y-auto md:overflow-hidden">
-      {/* Barra superior con botón volver */}
-      <div className="w-full flex items-center h-16 px-4 bg-green-50 border-b border-green-100 shadow-sm fixed top-0 left-0 z-50">
+      {/* Barra superior con botón volver y selección de productos */}
+      <div className="w-full flex items-center justify-between h-16 px-4 bg-green-50 border-b border-green-100 shadow-sm fixed top-0 left-0 z-50">
         <button
           onClick={onCancel}
           className="text-green-700 hover:bg-green-100 hover:text-green-900 text-base font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
         >
           ← Volver
         </button>
+        
+        {/* Botón desplegable de productos seleccionados */}
+        {selectedCount > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowSelectedProducts(!showSelectedProducts)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center gap-2"
+            >
+              <span>🛒 {selectedCount} productos</span>
+              <span className="text-sm">€{totalPrice.toFixed(2)}</span>
+              <span className={`transition-transform ${showSelectedProducts ? 'rotate-180' : ''}`}>▼</span>
+            </button>
+            
+            {showSelectedProducts && (
+              <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-green-100 z-50 max-h-96 overflow-y-auto">
+                <div className="p-4">
+                  <h3 className="text-lg font-bold mb-3 text-green-900">Productos Seleccionados</h3>
+                  <div className="space-y-2 mb-4">
+                    {selectedList.map(product => (
+                      <div key={product._id} className="flex items-center justify-between bg-green-50 rounded-lg p-2">
+                        <div className="flex items-center gap-2">
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="w-8 h-8 object-cover rounded" />
+                          ) : (
+                            <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center text-xs text-green-400">Sin</div>
+                          )}
+                          <span className="font-medium text-green-900 truncate max-w-[120px] text-sm">{product.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="bg-green-100 text-green-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-green-200"
+                            onClick={() => handleQuantityChange(product._id, -1)}
+                          >
+                            -
+                          </button>
+                          <span className="font-bold text-green-700 text-sm">{product.quantity}</span>
+                          <button
+                            type="button"
+                            className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-green-700"
+                            onClick={() => handleQuantityChange(product._id, 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-lg font-semibold text-green-900">Total:</span>
+                    <span className="text-xl font-bold text-green-700">€{totalPrice.toFixed(2)}</span>
+                  </div>
+                  <button
+                    onClick={handleAddToRound}
+                    className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-base shadow-sm"
+                  >
+                    Añadir a la Ronda
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
       {/* Contenido principal con padding top para la barra */}
-      <div className="flex-1 flex flex-col md:flex-row pt-20 min-h-0">
+      <div className="flex-1 pt-20 min-h-0 overflow-y-auto">
         {/* Productos agrupados por categoría en modo acordeón */}
-        <div className="flex flex-col gap-2">
+        <div className="p-4 space-y-3">
           {Object.entries(groupedProducts).map(([category, prods]) => {
             const isOpen = openCategories.includes(category);
-            const isTapas = category === 'Tapas';
+            const categoryStyle = getCategoryStyle(category);
             return (
-              <div key={category} className="mb-1">
+              <div key={category} className="mb-2">
                 <button
                   type="button"
-                  className={`w-full flex items-center justify-between px-3 py-3 rounded-xl shadow-sm border font-bold text-lg capitalize transition-colors focus:outline-none ${isTapas ? 'bg-yellow-50 border-yellow-200 text-yellow-900' : 'bg-green-50 border-green-100 text-green-900'} ${isOpen ? (isTapas ? 'bg-yellow-100' : 'bg-green-100') : ''}`}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl shadow-sm border font-bold text-lg capitalize transition-colors focus:outline-none ${categoryStyle.bg} ${categoryStyle.border} ${categoryStyle.text} ${isOpen ? categoryStyle.hover : ''}`}
                   onClick={() => setOpenCategories(prev =>
                     prev.includes(category)
                       ? prev.filter(c => c !== category)
                       : [...prev, category]
                   )}
                 >
-                  <span className="flex items-center gap-2">
-                    {isTapas && (
-                      <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 01.993.883L11 3v2.382l2.447 1.632a1 1 0 01.553.894V10a6 6 0 11-8 0V8.809a1 1 0 01.553-.894L9 5.382V3a1 1 0 011-1zm0 2.618l-2 1.334V10a4 4 0 108 0V5.952l-2-1.334V10a2 2 0 11-4 0V4.618z" /></svg>
-                    )}
+                  <span className="flex items-center gap-3">
+                    <span className="text-xl">{categoryStyle.icon}</span>
                     {category}
                   </span>
                   <span className={`ml-2 transition-transform ${isOpen ? 'rotate-90' : ''}`}>▶</span>
                 </button>
                 {isOpen && (
-                  <div className="mt-2 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {category === 'Copas' && cubataProduct && (
                       <div
-                        className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 cursor-pointer flex flex-col items-center p-2.5 border-neutral-200 hover:border-green-500 hover:ring-2 hover:ring-green-200`}
+                        className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 cursor-pointer flex flex-col items-center p-2.5 border-neutral-200 hover:border-purple-500 hover:ring-2 hover:ring-purple-200`}
                         onClick={() => setShowCubataModal(true)}
                       >
                         {cubataProduct.imageUrl ? (
                           <img src={cubataProduct.imageUrl} alt="Cubata" className="w-20 h-20 object-cover rounded-xl mb-1" />
                         ) : (
-                          <div className="w-20 h-20 bg-green-50 flex items-center justify-center rounded-xl mb-1 text-green-200">Sin imagen</div>
+                          <div className="w-20 h-20 bg-purple-50 flex items-center justify-center rounded-xl mb-1 text-purple-200">Sin imagen</div>
                         )}
                         <div className="text-center w-full">
                           <h3 className="text-sm font-semibold text-neutral-900 truncate">Cubata</h3>
-                          <p className="text-green-700 font-bold text-sm">{cubataProduct.price?.toFixed(2) || '5.00'} €</p>
+                          <p className="text-purple-700 font-bold text-sm">{cubataProduct.price?.toFixed(2) || '5.00'} €</p>
                         </div>
                       </div>
                     )}
@@ -311,74 +392,14 @@ function ProductList({ onAddProducts, onCancel }) {
           {/* Producto personalizado */}
           <div
             onClick={() => setShowCustomProductModal(true)}
-            className="bg-white rounded-2xl shadow-sm border-2 border-dashed border-green-300 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 transition-colors p-2 min-h-[120px] mt-2"
+            className="bg-white rounded-2xl shadow-sm border-2 border-dashed border-green-300 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 transition-colors p-4 min-h-[120px] mt-4"
           >
             <span className="text-4xl text-green-600">+</span>
-            <p className="mt-1 text-base text-green-700 font-medium">Producto Personalizado</p>
-          </div>
-        </div>
-        {/* Lateral o inferior: productos seleccionados */}
-        <div className="w-full md:w-80 bg-green-50 border-t md:border-t-0 md:border-l border-green-100 p-4 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto max-h-[calc(4*3.5rem)]">
-            <h3 className="text-lg font-bold mb-2 text-green-900">Seleccionados</h3>
-            {selectedList.length === 0 ? (
-              <p className="text-green-300">No hay productos añadidos.</p>
-            ) : (
-              <ul className="space-y-2">
-                {selectedList.map(product => (
-                  <li key={product._id} className="flex items-center justify-between bg-white rounded-xl shadow p-2">
-                    <div className="flex items-center gap-2">
-                      {product.imageUrl ? (
-                        <img src={product.imageUrl} alt={product.name} className="w-8 h-8 object-cover rounded" />
-                      ) : (
-                        <div className="w-8 h-8 bg-green-50 rounded flex items-center justify-center text-xs text-green-200">Sin</div>
-                      )}
-                      <span className="font-medium text-green-900 truncate max-w-[120px] text-base">{product.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="bg-green-100 text-green-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-green-200"
-                        onClick={() => handleQuantityChange(product._id, -1)}
-                      >
-                        -
-                      </button>
-                      <span className="font-bold text-green-700 text-base">{product.quantity}</span>
-                      <button
-                        type="button"
-                        className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-green-700"
-                        onClick={() => handleQuantityChange(product._id, 1)}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          {/* Total y acciones */}
-          <div className="mt-6 flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-green-900">Total:</span>
-              <span className="text-xl font-bold text-green-700">{getTotalPrice().toFixed(2)} €</span>
-            </div>
-            <button
-              onClick={handleAddToRound}
-              className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={selectedList.length === 0}
-            >
-              Añadir a la Ronda
-            </button>
-            <button
-              onClick={onCancel}
-              className="w-full py-3 bg-neutral-200 text-green-900 rounded-lg hover:bg-neutral-300 transition-colors font-semibold text-lg shadow-sm"
-            >
-              Cancelar
-            </button>
+            <p className="mt-2 text-base text-green-700 font-medium">Producto Personalizado</p>
           </div>
         </div>
       </div>
+
       {/* Modal de producto personalizado */}
       {showCustomProductModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -454,6 +475,7 @@ function ProductList({ onAddProducts, onCancel }) {
           </div>
         </div>
       )}
+
       {/* Modal de Cubata */}
       {showCubataModal && cubataProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50 overflow-y-auto">

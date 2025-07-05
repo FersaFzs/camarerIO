@@ -1,32 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct, updateProductAvailability } from '../../services/productService';
-import '../../mesas-modern.css'
-
-// NUEVO: servicios para licores y refrescos
-const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/api';
-
-async function fetchLiqueurs() {
-  const res = await fetch(`${API_URL}/licores`);
-  return await res.json();
-}
-async function addLiqueur(name) {
-  const res = await fetch(`${API_URL}/licores`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-  return await res.json();
-}
-async function deleteLiqueur(id) {
-  await fetch(`${API_URL}/licores/${id}`, { method: 'DELETE' });
-}
-async function fetchSoftDrinks() {
-  const res = await fetch(`${API_URL}/refrescos`);
-  return await res.json();
-}
-async function addSoftDrink(name) {
-  const res = await fetch(`${API_URL}/refrescos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-  return await res.json();
-}
-async function deleteSoftDrink(id) {
-  await fetch(`${API_URL}/refrescos/${id}`, { method: 'DELETE' });
-}
+import { getProducts, createProduct, updateProduct, deleteProduct } from '../../services/productService';
 
 const Inventory = () => {
   const [products, setProducts] = useState([]);
@@ -37,31 +10,23 @@ const Inventory = () => {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
-    image: null,
-    category: 'Otros'
+    image: null
   });
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [liqueurs, setLiqueurs] = useState([]);
-  const [softDrinks, setSoftDrinks] = useState([]);
-  const [newLiqueur, setNewLiqueur] = useState('');
-  const [newSoftDrink, setNewSoftDrink] = useState('');
-  const [liqueurMsg, setLiqueurMsg] = useState(null);
-  const [softDrinkMsg, setSoftDrinkMsg] = useState(null);
-  const [showCombinados, setShowCombinados] = useState(false);
 
   const categoryOptions = [
     'Cervezas',
     'Refrescos',
     'Copas',
     'Cafés',
+    'Vinos',
+    'Helados',
     'Tapas',
     'Otros'
   ];
 
   useEffect(() => {
     loadProducts();
-    fetchLiqueurs().then(setLiqueurs);
-    fetchSoftDrinks().then(setSoftDrinks);
   }, []);
 
   const loadProducts = async () => {
@@ -84,8 +49,7 @@ const Inventory = () => {
       setFormData({
         name: product.name,
         price: product.price,
-        image: null,
-        category: product.category || 'Otros'
+        image: null
       });
       setPreviewUrl(product.imageUrl);
     } else {
@@ -93,8 +57,7 @@ const Inventory = () => {
       setFormData({
         name: '',
         price: '',
-        image: null,
-        category: 'Otros'
+        image: null
       });
       setPreviewUrl(null);
     }
@@ -107,8 +70,7 @@ const Inventory = () => {
     setFormData({
       name: '',
       price: '',
-      image: null,
-      category: 'Otros'
+      image: null
     });
     setPreviewUrl(null);
   };
@@ -127,7 +89,6 @@ const Inventory = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('price', formData.price);
-      formDataToSend.append('category', formData.category);
       if (formData.image) {
         formDataToSend.append('image', formData.image);
       }
@@ -160,78 +121,10 @@ const Inventory = () => {
     }
   };
 
-  const handleAddLiqueur = async (e) => {
-    e.preventDefault();
-    setLiqueurMsg(null);
-    if (!newLiqueur.trim()) return;
-    if (liqueurs.some(l => l.name.toLowerCase() === newLiqueur.trim().toLowerCase())) {
-      setLiqueurMsg('Ese licor ya existe.');
-      return;
-    }
-    try {
-      await addLiqueur(newLiqueur.trim());
-      setLiqueurMsg('Licor añadido correctamente.');
-      setLiqueurs(await fetchLiqueurs());
-      setNewLiqueur('');
-    } catch (err) {
-      setLiqueurMsg('Error al añadir licor.');
-    }
-  };
-
-  const handleDeleteLiqueur = async (id) => {
-    setLiqueurMsg(null);
-    try {
-      await deleteLiqueur(id);
-      setLiqueurMsg('Licor eliminado.');
-      setLiqueurs(await fetchLiqueurs());
-    } catch (err) {
-      setLiqueurMsg('Error al eliminar licor.');
-    }
-  };
-
-  const handleAddSoftDrink = async (e) => {
-    e.preventDefault();
-    setSoftDrinkMsg(null);
-    if (!newSoftDrink.trim()) return;
-    if (softDrinks.some(s => s.name.toLowerCase() === newSoftDrink.trim().toLowerCase())) {
-      setSoftDrinkMsg('Ese refresco ya existe.');
-      return;
-    }
-    try {
-      await addSoftDrink(newSoftDrink.trim());
-      setSoftDrinkMsg('Refresco añadido correctamente.');
-      setSoftDrinks(await fetchSoftDrinks());
-      setNewSoftDrink('');
-    } catch (err) {
-      setSoftDrinkMsg('Error al añadir refresco.');
-    }
-  };
-
-  const handleDeleteSoftDrink = async (id) => {
-    setSoftDrinkMsg(null);
-    try {
-      await deleteSoftDrink(id);
-      setSoftDrinkMsg('Refresco eliminado.');
-      setSoftDrinks(await fetchSoftDrinks());
-    } catch (err) {
-      setSoftDrinkMsg('Error al eliminar refresco.');
-    }
-  };
-
-  const handleToggleAvailability = async (product) => {
-    try {
-      await updateProductAvailability(product._id, !product.available);
-      setProducts(prev => prev.map(p => p._id === product._id ? { ...p, available: !p.available } : p));
-    } catch (err) {
-      setError('Error al cambiar la disponibilidad');
-      console.error(err);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -239,10 +132,10 @@ const Inventory = () => {
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-green-900">Inventario</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Inventario</h1>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg"
         >
           Nuevo Producto
         </button>
@@ -256,7 +149,7 @@ const Inventory = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {products.map((product) => (
-          <div key={product._id} className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow overflow-hidden border border-green-100">
+          <div key={product._id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden">
             <div className="aspect-w-1 aspect-h-1">
               {product.imageUrl ? (
                 <img
@@ -265,38 +158,29 @@ const Inventory = () => {
                   className="w-full h-48 object-cover"
                 />
               ) : (
-                <div className="w-full h-48 bg-green-50 flex items-center justify-center">
-                  <span className="text-green-200">Sin imagen</span>
+                <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                  <span className="text-gray-400">Sin imagen</span>
                 </div>
               )}
             </div>
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-green-900 mb-2">{product.name}</h3>
-              <p className="text-green-700 font-bold mb-4">
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h3>
+              <p className="text-indigo-600 font-medium mb-4">
                 {new Intl.NumberFormat('es-ES', {
                   style: 'currency',
                   currency: 'EUR'
                 }).format(product.price)}
               </p>
-              <div className="flex justify-between items-center mb-4">
-                <span className={`text-sm font-semibold px-3 py-1 rounded-full ${product.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{product.available ? 'Disponible' : 'No disponible'}</span>
-                <button
-                  onClick={() => handleToggleAvailability(product)}
-                  className={`ml-2 px-3 py-1 rounded-full font-bold text-xs transition-colors shadow ${product.available ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-400 text-white hover:bg-red-500'}`}
-                >
-                  {product.available ? 'Marcar no disponible' : 'Marcar disponible'}
-                </button>
-              </div>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => handleOpenModal(product)}
-                  className="text-green-700 hover:text-green-900 font-semibold transition-colors"
+                  className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => handleDelete(product._id)}
-                  className="text-red-600 hover:text-red-700 font-semibold transition-colors"
+                  className="text-red-600 hover:text-red-700 font-medium transition-colors"
                 >
                   Eliminar
                 </button>
@@ -306,102 +190,41 @@ const Inventory = () => {
         ))}
       </div>
 
-      <div className="mt-12 flex justify-center">
-        <button
-          onClick={() => setShowCombinados(v => !v)}
-          className="px-6 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold border border-green-200 shadow-sm"
-        >
-          {showCombinados ? 'Ocultar gestión de combinados' : 'Gestionar combinados (Licores y Refrescos)'}
-        </button>
-      </div>
-
-      {showCombinados && (
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
-            <h2 className="text-xl font-bold text-green-900 mb-4">Licores para combinados</h2>
-            <form onSubmit={handleAddLiqueur} className="flex gap-2 mb-4">
-              <input type="text" value={newLiqueur} onChange={e => setNewLiqueur(e.target.value)} placeholder="Añadir licor..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
-              <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
-            </form>
-            {liqueurMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{liqueurMsg}</div>}
-            <ul className="space-y-2">
-              {liqueurs.length === 0 && <li className="text-green-300">No hay licores añadidos.</li>}
-              {liqueurs.map(l => (
-                <li key={l._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
-                  <span>{l.name}</span>
-                  <button onClick={() => handleDeleteLiqueur(l._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-green-100">
-            <h2 className="text-xl font-bold text-green-900 mb-4">Refrescos para combinados</h2>
-            <form onSubmit={handleAddSoftDrink} className="flex gap-2 mb-4">
-              <input type="text" value={newSoftDrink} onChange={e => setNewSoftDrink(e.target.value)} placeholder="Añadir refresco..." className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-green-50" />
-              <button type="submit" className="bg-green-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700">Añadir</button>
-            </form>
-            {softDrinkMsg && <div className="mb-2 text-sm text-green-700 font-semibold">{softDrinkMsg}</div>}
-            <ul className="space-y-2">
-              {softDrinks.length === 0 && <li className="text-green-300">No hay refrescos añadidos.</li>}
-              {softDrinks.map(s => (
-                <li key={s._id} className="flex justify-between items-center bg-green-50 rounded-lg px-4 py-2">
-                  <span>{s.name}</span>
-                  <button onClick={() => handleDeleteSoftDrink(s._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
-            <h2 className="text-2xl font-bold text-green-900 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
               {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-green-900 font-medium mb-2">Nombre</label>
+                <label className="block text-gray-700 font-medium mb-2">Nombre</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   required
                 />
               </div>
               <div>
-                <label className="block text-green-900 font-medium mb-2">Precio</label>
+                <label className="block text-gray-700 font-medium mb-2">Precio</label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   required
                 />
               </div>
               <div>
-                <label className="block text-green-900 font-medium mb-2">Categoría</label>
-                <select
-                  value={formData.category}
-                  onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50 text-green-900 font-semibold capitalize"
-                  required
-                >
-                  {categoryOptions.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-green-900 font-medium mb-2">Imagen</label>
+                <label className="block text-gray-700 font-medium mb-2">Imagen</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="w-full text-green-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  className="w-full text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                 />
                 {previewUrl && (
                   <div className="mt-4">
@@ -417,13 +240,13 @@ const Inventory = () => {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-6 py-2 text-green-700 hover:text-green-900 font-semibold transition-colors"
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors shadow-md hover:shadow-lg"
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors shadow-md hover:shadow-lg"
                 >
                   {editingProduct ? 'Guardar' : 'Crear'}
                 </button>
