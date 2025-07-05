@@ -258,7 +258,7 @@ function ProductList({ onAddProducts, onCancel }) {
               <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-green-100 z-50 max-h-96 overflow-y-auto">
                 <div className="p-4">
                   <h3 className="text-lg font-bold mb-3 text-green-900">Productos Seleccionados</h3>
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-2">
                     {selectedList.map(product => (
                       <div key={product._id} className="flex items-center justify-between bg-green-50 rounded-lg p-2">
                         <div className="flex items-center gap-2">
@@ -289,16 +289,6 @@ function ProductList({ onAddProducts, onCancel }) {
                       </div>
                     ))}
                   </div>
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-lg font-semibold text-green-900">Total:</span>
-                    <span className="text-xl font-bold text-green-700">€{totalPrice.toFixed(2)}</span>
-                  </div>
-                  <button
-                    onClick={handleAddToRound}
-                    className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-base shadow-sm"
-                  >
-                    Añadir a la Ronda
-                  </button>
                 </div>
               </div>
             )}
@@ -307,7 +297,7 @@ function ProductList({ onAddProducts, onCancel }) {
       </div>
 
       {/* Contenido principal con padding top para la barra */}
-      <div className="flex-1 pt-20 min-h-0 overflow-y-auto">
+      <div className="flex-1 pt-20 min-h-0 overflow-y-auto pb-20">
         {/* Productos agrupados por categoría en modo acordeón */}
         <div className="p-4 space-y-3">
           {Object.entries(groupedProducts).map(([category, prods]) => {
@@ -399,6 +389,28 @@ function ProductList({ onAddProducts, onCancel }) {
           </div>
         </div>
       </div>
+
+      {/* Barra fija inferior con total y botón de añadir */}
+      {selectedCount > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-green-100 shadow-lg z-50 p-4">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-lg font-semibold text-green-900">
+                Total: <span className="text-2xl font-bold text-green-700">€{totalPrice.toFixed(2)}</span>
+              </span>
+              <span className="text-sm text-green-600 font-medium">
+                {selectedCount} producto{selectedCount !== 1 ? 's' : ''} seleccionado{selectedCount !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <button
+              onClick={handleAddToRound}
+              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg shadow-md hover:shadow-lg"
+            >
+              Añadir a la Ronda
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal de producto personalizado */}
       {showCustomProductModal && (
