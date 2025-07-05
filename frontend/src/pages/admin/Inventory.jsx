@@ -10,7 +10,8 @@ const Inventory = () => {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
-    image: null
+    image: null,
+    category: 'Otros'
   });
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -49,7 +50,8 @@ const Inventory = () => {
       setFormData({
         name: product.name,
         price: product.price,
-        image: null
+        image: null,
+        category: product.category || 'Otros'
       });
       setPreviewUrl(product.imageUrl);
     } else {
@@ -57,7 +59,8 @@ const Inventory = () => {
       setFormData({
         name: '',
         price: '',
-        image: null
+        image: null,
+        category: 'Otros'
       });
       setPreviewUrl(null);
     }
@@ -70,7 +73,8 @@ const Inventory = () => {
     setFormData({
       name: '',
       price: '',
-      image: null
+      image: null,
+      category: 'Otros'
     });
     setPreviewUrl(null);
   };
@@ -89,6 +93,7 @@ const Inventory = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('price', formData.price);
+      formDataToSend.append('category', formData.category);
       if (formData.image) {
         formDataToSend.append('image', formData.image);
       }
@@ -124,7 +129,7 @@ const Inventory = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -132,10 +137,10 @@ const Inventory = () => {
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Inventario</h1>
+        <h1 className="text-3xl font-bold text-green-900">Inventario</h1>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold"
         >
           Nuevo Producto
         </button>
@@ -164,8 +169,8 @@ const Inventory = () => {
               )}
             </div>
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h3>
-              <p className="text-indigo-600 font-medium mb-4">
+              <h3 className="text-xl font-semibold text-green-900 mb-2">{product.name}</h3>
+              <p className="text-green-700 font-bold mb-4">
                 {new Intl.NumberFormat('es-ES', {
                   style: 'currency',
                   currency: 'EUR'
@@ -174,13 +179,13 @@ const Inventory = () => {
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => handleOpenModal(product)}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                  className="text-green-700 hover:text-green-900 font-semibold transition-colors"
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => handleDelete(product._id)}
-                  className="text-red-600 hover:text-red-700 font-medium transition-colors"
+                  className="text-red-600 hover:text-red-700 font-semibold transition-colors"
                 >
                   Eliminar
                 </button>
