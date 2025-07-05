@@ -193,38 +193,51 @@ const Inventory = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            <h2 className="text-2xl font-bold text-green-900 mb-6">
               {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Nombre</label>
+                <label className="block text-green-900 font-medium mb-2">Nombre</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Precio</label>
+                <label className="block text-green-900 font-medium mb-2">Precio</label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Imagen</label>
+                <label className="block text-green-900 font-medium mb-2">Categoría</label>
+                <select
+                  value={formData.category}
+                  onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-green-50 text-green-900 font-semibold capitalize"
+                  required
+                >
+                  {categoryOptions.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-green-900 font-medium mb-2">Imagen</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="w-full text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                  className="w-full text-green-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                 />
                 {previewUrl && (
                   <div className="mt-4">
@@ -240,13 +253,13 @@ const Inventory = () => {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                  className="px-6 py-2 text-green-700 hover:text-green-900 font-semibold transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors shadow-md hover:shadow-lg"
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors shadow-md hover:shadow-lg"
                 >
                   {editingProduct ? 'Guardar' : 'Crear'}
                 </button>
