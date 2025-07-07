@@ -98,7 +98,22 @@ export const markRoundAsPaid = async (req, res) => {
     round.isPaid = true
     round.paidAt = new Date()
     await round.save()
-    
+
+    // Eliminar productos personalizados de helado y cubata usados en esta ronda
+    const productIdsToDelete = [];
+    for (const item of round.products) {
+      if (
+        (item.name && item.category === 'Helados' && (item.name.startsWith('Helado +') || item.name.startsWith('Copa de helado +')))
+        ||
+        (item.name && item.category === 'Copas' && item.name.includes(' + '))
+      ) {
+        productIdsToDelete.push(item.product);
+      }
+    }
+    if (productIdsToDelete.length > 0) {
+      await Product.deleteMany({ _id: { $in: productIdsToDelete } });
+    }
+
     const updatedRound = await Round.findById(roundId).populate('products.product')
     // Emitir evento
     req.io.emit('rounds:update', { tableNumber: round.tableNumber })
@@ -113,7 +128,10 @@ export const markAllRoundsAsPaid = async (req, res) => {
   try {
     const { tableNumber } = req.params
     
-    // Encontrar y marcar como pagadas todas las rondas no pagadas de la mesa
+    // Encontrar todas las rondas no pagadas de la mesa
+    const rounds = await Round.find({ tableNumber, isPaid: false });
+
+    // Marcar como pagadas
     const result = await Round.updateMany(
       { tableNumber, isPaid: false },
       { 
@@ -126,6 +144,23 @@ export const markAllRoundsAsPaid = async (req, res) => {
 
     if (result.modifiedCount === 0) {
       return res.status(404).json({ message: 'No se encontraron rondas activas para esta mesa' })
+    }
+
+    // Eliminar productos personalizados de helado y cubata usados en estas rondas
+    const productIdsToDelete = [];
+    for (const round of rounds) {
+      for (const item of round.products) {
+        if (
+          (item.name && item.category === 'Helados' && (item.name.startsWith('Helado +') || item.name.startsWith('Copa de helado +')))
+          ||
+          (item.name && item.category === 'Copas' && item.name.includes(' + '))
+        ) {
+          productIdsToDelete.push(item.product);
+        }
+      }
+    }
+    if (productIdsToDelete.length > 0) {
+      await Product.deleteMany({ _id: { $in: productIdsToDelete } });
     }
 
     // Emitir evento

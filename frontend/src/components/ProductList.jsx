@@ -160,6 +160,10 @@ function ProductList({ onAddProducts, onCancel }) {
     }
   };
 
+  // Iconos por defecto
+  const DEFAULT_ICECREAM_IMAGE = 'https://cdn-icons-png.flaticon.com/512/685/685352.png'; // Icono helado
+  const DEFAULT_CUBATA_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2738/2738897.png'; // Icono copa
+
   const handleCubataAdd = async () => {
     if (!selectedLicor || !selectedRefresco || !cubataProduct) return;
     const name = `${selectedLicor} + ${selectedRefresco}`;
@@ -173,7 +177,7 @@ function ProductList({ onAddProducts, onCancel }) {
           name,
           price: cubataProduct.price,
           category: 'Copas',
-          imageUrl: cubataProduct.imageUrl || ''
+          imageUrl: cubataProduct.imageUrl || DEFAULT_CUBATA_IMAGE
         });
         setProducts(prev => [...prev, newProduct]);
       } catch (err) {
@@ -220,7 +224,7 @@ function ProductList({ onAddProducts, onCancel }) {
           name,
           price: iceCreamProduct.price,
           category: 'Helados',
-          imageUrl: iceCreamProduct.imageUrl || ''
+          imageUrl: iceCreamProduct.imageUrl || DEFAULT_ICECREAM_IMAGE
         });
         setProducts(prev => [...prev, newProduct]);
       } catch (err) {
