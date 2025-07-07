@@ -2,9 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import { fetchCustomTables, updateCustomTable } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
 
-const CANVAS_WIDTH = 1600;
-const CANVAS_HEIGHT = 900;
-const TABLE_SIZE = 160;
+const CANVAS_WIDTH = 1200;
+const CANVAS_HEIGHT = 700;
+const TABLE_SIZE = 100;
+const DEFAULT_POSITIONS = [
+  { x: 80, y: 80 },
+  { x: 240, y: 80 },
+  { x: 400, y: 80 },
+  { x: 80, y: 240 },
+  { x: 240, y: 240 },
+  { x: 400, y: 240 },
+  { x: 80, y: 400 },
+  { x: 240, y: 400 },
+  { x: 400, y: 400 },
+];
 
 export default function BarraView() {
   const [tables, setTables] = useState([]);
@@ -22,7 +33,13 @@ export default function BarraView() {
       setLoading(true);
       setError(null);
       try {
-        const mesas = await fetchCustomTables();
+        let mesas = await fetchCustomTables();
+        // Si alguna mesa no tiene posX/posY, asignar posición por defecto
+        mesas = mesas.map((t, i) => ({
+          ...t,
+          posX: typeof t.posX === 'number' ? t.posX : DEFAULT_POSITIONS[i % DEFAULT_POSITIONS.length].x,
+          posY: typeof t.posY === 'number' ? t.posY : DEFAULT_POSITIONS[i % DEFAULT_POSITIONS.length].y,
+        }));
         setTables(mesas);
         const rounds = await getActiveRounds();
         // Agrupar productos por mesa
@@ -90,20 +107,20 @@ export default function BarraView() {
   });
 
   if (loading) {
-    return <div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-600"></div></div>;
+    return <div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div></div>;
   }
   if (error) {
-    return <div className="flex items-center justify-center h-full text-red-600 font-bold text-3xl">{error}</div>;
+    return <div className="flex items-center justify-center h-full text-red-600 font-bold text-2xl">{error}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-green-50 flex flex-col font-inter">
-      {/* Barra superior */}
-      <div className="w-full flex items-center justify-between h-24 px-12 bg-green-100 border-b-4 border-green-300 shadow-md sticky top-0 left-0 z-50">
-        <h1 className="text-4xl font-extrabold text-green-800 tracking-tight">Vista de Comandas (Barra)</h1>
+    <div className="min-h-screen bg-white flex flex-col font-inter">
+      {/* Header */}
+      <div className="w-full flex items-center justify-between h-20 px-10 bg-white border-b border-green-200 shadow-sm sticky top-0 left-0 z-50">
+        <h1 className="text-3xl font-extrabold text-green-800 tracking-tight">Comandas</h1>
         <button
           onClick={() => setEditing(e => !e)}
-          className={`px-8 py-4 rounded-2xl text-2xl font-bold transition-colors shadow-lg border-4 ${editing ? 'bg-green-600 text-white border-green-700' : 'bg-white text-green-700 border-green-400 hover:bg-green-100'}`}
+          className={`px-6 py-3 rounded-xl text-lg font-bold transition-colors shadow border-2 ${editing ? 'bg-green-600 text-white border-green-700' : 'bg-white text-green-700 border-green-400 hover:bg-green-100'}`}
         >
           {editing ? 'Salir de edición' : 'Editar disposición'}
         </button>
@@ -112,7 +129,7 @@ export default function BarraView() {
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         <div
           ref={canvasRef}
-          className="relative bg-green-200 rounded-3xl shadow-2xl border-4 border-green-300"
+          className="relative bg-white rounded-3xl shadow-xl border border-green-100"
           style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, touchAction: 'none' }}
         >
           {tables.map(table => (
@@ -125,24 +142,24 @@ export default function BarraView() {
                 width: TABLE_SIZE,
                 height: TABLE_SIZE,
                 zIndex: draggedId === table._id ? 10 : 1,
-                boxShadow: draggedId === table._id ? '0 0 0 8px #34d39955' : undefined,
+                boxShadow: draggedId === table._id ? '0 0 0 8px #34d39933' : '0 2px 12px 0 #0001',
                 transition: draggedId === table._id ? 'none' : 'box-shadow 0.2s',
                 cursor: editing ? 'grab' : 'default',
                 userSelect: 'none',
               }}
               onMouseDown={e => handleMouseDown(e, table)}
             >
-              <div className={`rounded-full w-full h-full flex flex-col items-center justify-center border-4 ${editing ? 'border-green-500 bg-green-100' : 'border-green-700 bg-white'} shadow-xl p-2`}>
-                <span className="text-4xl font-extrabold text-green-800 mb-2 drop-shadow-lg">{table.name || `Mesa ${table.number}`}</span>
-                <div className="w-full flex flex-col gap-3 items-center">
+              <div className={`rounded-2xl w-full h-full flex flex-col items-center justify-center border border-green-200 bg-white shadow p-2`}> 
+                <span className="text-xl font-bold text-green-800 mb-1 truncate w-full text-center">{table.name || `Mesa ${table.number}`}</span>
+                <div className="w-full flex flex-col gap-2 items-center">
                   {(orders[table.number] || []).length === 0 ? (
-                    <span className="text-green-400 text-2xl">Sin comandas</span>
+                    <span className="text-green-300 text-base">Sin comandas</span>
                   ) : (
                     orders[table.number].map((order, idx) => (
-                      <div key={idx} className="bg-green-300 text-green-900 rounded-2xl px-4 py-3 text-2xl font-bold flex items-center gap-4 shadow-md">
-                        <span>{order.name}</span>
-                        <span className="font-extrabold">x{order.qty}</span>
-                        {!editing && <button className="ml-4 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 text-xl font-bold shadow">Listo</button>}
+                      <div key={idx} className="bg-green-100 text-green-900 rounded-lg px-2 py-1 text-base font-semibold flex items-center gap-2 shadow-sm w-full justify-between">
+                        <span className="truncate max-w-[70px]">{order.name}</span>
+                        <span className="font-bold">x{order.qty}</span>
+                        {!editing && <button className="ml-2 px-2 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs font-bold shadow">Listo</button>}
                       </div>
                     ))
                   )}
