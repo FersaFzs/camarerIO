@@ -1,5 +1,7 @@
 import api from './api';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com';
+
 export const getProducts = async () => {
   const response = await api.get('/products');
   return response.data;
@@ -34,7 +36,7 @@ export const updateProductAvailability = async (id, available) => {
 };
 
 export const createLiqueur = async (name) => {
-  const res = await fetch('/api/licores', {
+  const res = await fetch(`${API_URL}/api/licores`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name })
@@ -44,13 +46,13 @@ export const createLiqueur = async (name) => {
 };
 
 export const deleteLiqueur = async (id) => {
-  const res = await fetch(`/api/licores/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_URL}/api/licores/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Error al eliminar licor');
   return res.json();
 };
 
 export const createSoftDrink = async (name) => {
-  const res = await fetch('/api/refrescos', {
+  const res = await fetch(`${API_URL}/api/refrescos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name })
@@ -60,31 +62,31 @@ export const createSoftDrink = async (name) => {
 };
 
 export const deleteSoftDrink = async (id) => {
-  const res = await fetch(`/api/refrescos/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_URL}/api/refrescos/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Error al eliminar refresco');
   return res.json();
 };
 
 export const getLiqueurs = async () => {
-  const res = await fetch('/api/licores');
+  const res = await fetch(`${API_URL}/api/licores`);
   if (!res.ok) throw new Error('Error al obtener licores');
   return res.json();
 };
 
 export const getSoftDrinks = async () => {
-  const res = await fetch('/api/refrescos');
+  const res = await fetch(`${API_URL}/api/refrescos`);
   if (!res.ok) throw new Error('Error al obtener refrescos');
   return res.json();
 };
 
 export const getIceCreams = async () => {
-  const res = await fetch('/api/icecreams');
+  const res = await fetch(`${API_URL}/api/icecreams`);
   if (!res.ok) throw new Error('Error al obtener sabores de helado');
   return res.json();
 };
 
 export const createIceCream = async (name) => {
-  const res = await fetch('/api/icecreams', {
+  const res = await fetch(`${API_URL}/api/icecreams`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name })
@@ -94,7 +96,7 @@ export const createIceCream = async (name) => {
 };
 
 export const deleteIceCream = async (id) => {
-  const res = await fetch(`/api/icecreams/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_URL}/api/icecreams/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Error al eliminar sabor de helado');
   return res.json();
 }; 
