@@ -34,6 +34,12 @@ export default function BarraView() {
       setError(null);
       try {
         let mesas = await fetchCustomTables();
+        console.log('Mesas recibidas:', mesas);
+        if (!Array.isArray(mesas) || mesas.length === 0) {
+          setTables([]);
+          setLoading(false);
+          return;
+        }
         // Si alguna mesa no tiene posX/posY, asignar posición por defecto
         mesas = mesas.map((t, i) => ({
           ...t,
@@ -106,6 +112,24 @@ export default function BarraView() {
     };
   });
 
+  if (!loading && tables.length === 0) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col font-inter">
+        <div className="w-full flex items-center justify-between h-20 px-10 bg-white border-b border-green-200 shadow-sm sticky top-0 left-0 z-50">
+          <h1 className="text-3xl font-extrabold text-green-800 tracking-tight">Comandas</h1>
+          <button
+            onClick={() => setEditing(e => !e)}
+            className={`px-6 py-3 rounded-xl text-lg font-bold transition-colors shadow border-2 ${editing ? 'bg-green-600 text-white border-green-700' : 'bg-white text-green-700 border-green-400 hover:bg-green-100'}`}
+          >
+            {editing ? 'Salir de edición' : 'Editar disposición'}
+          </button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center p-8">
+          <div className="text-green-400 text-2xl font-bold">No hay mesas configuradas en el sistema.</div>
+        </div>
+      </div>
+    );
+  }
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div></div>;
   }
