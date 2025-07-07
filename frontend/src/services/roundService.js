@@ -336,4 +336,17 @@ export const getTicket = async (ticketId) => {
     console.error('Error:', error);
     throw error;
   }
+};
+
+export const updateCustomTable = async (tableId, data) => {
+  const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com';
+  const res = await fetch(`${API_URL}/api/tables/${tableId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Error al actualizar la mesa');
+  return await res.json();
 }; 
