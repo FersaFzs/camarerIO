@@ -202,7 +202,7 @@ function ProductList({ onAddProducts, onCancel }) {
     setShowIceCreamModal(true);
   };
 
-  const handleAddIceCream = () => {
+  const handleAddIceCream = async () => {
     if (!iceCreamProduct) return;
     const bolas = selectedFlavors.length;
     if (selectedFlavors.some(f => !f)) return;
@@ -210,17 +210,30 @@ function ProductList({ onAddProducts, onCancel }) {
     if (bolas === 1) name = `Helado + ${selectedFlavors[0]}`;
     if (bolas === 2) name = `Helado + ${selectedFlavors[0]} + ${selectedFlavors[1]}`;
     if (bolas === 3) name = `Copa de helado + ${selectedFlavors[0]} + ${selectedFlavors[1]} + ${selectedFlavors[2]}`;
-    // Crear producto personalizado en memoria (no en BD)
-    const customId = `icecream-${iceCreamProduct._id}-${selectedFlavors.join('-')}`;
-    const customProduct = {
-      ...iceCreamProduct,
-      _id: customId,
-      name,
-    };
-    setProducts(prev => [...prev, customProduct]);
+    // Buscar si ya existe un producto con ese nombre y categoría Helados
+    let existing = products.find(p => p.name === name && p.category === 'Helados');
+    let newProduct = existing;
+    if (!existing) {
+      // Crear el producto en la BD
+      try {
+        newProduct = await createProduct({
+          name,
+          price: iceCreamProduct.price,
+          category: 'Helados',
+          imageUrl: iceCreamProduct.imageUrl || ''
+        });
+        setProducts(prev => [...prev, newProduct]);
+      } catch (err) {
+        setShowIceCreamModal(false);
+        setIceCreamProduct(null);
+        setSelectedFlavors([]);
+        alert('Error al crear el helado personalizado');
+        return;
+      }
+    }
     setSelectedProducts(prev => ({
       ...prev,
-      [customId]: (prev[customId] || 0) + 1
+      [newProduct._id]: (prev[newProduct._id] || 0) + 1
     }));
     setShowIceCreamModal(false);
     setIceCreamProduct(null);
