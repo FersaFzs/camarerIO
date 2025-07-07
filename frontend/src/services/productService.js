@@ -75,4 +75,26 @@ export const getSoftDrinks = async () => {
   const res = await fetch('/api/refrescos');
   if (!res.ok) throw new Error('Error al obtener refrescos');
   return res.json();
+};
+
+export const getIceCreams = async () => {
+  const res = await fetch('/api/icecreams');
+  if (!res.ok) throw new Error('Error al obtener sabores de helado');
+  return res.json();
+};
+
+export const createIceCream = async (name) => {
+  const res = await fetch('/api/icecreams', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  if (!res.ok) throw new Error('Error al crear sabor de helado');
+  return res.json();
+};
+
+export const deleteIceCream = async (id) => {
+  const res = await fetch(`/api/icecreams/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Error al eliminar sabor de helado');
+  return res.json();
 }; 

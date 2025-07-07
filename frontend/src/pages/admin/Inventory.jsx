@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct, updateProductAvailability, createLiqueur, deleteLiqueur, createSoftDrink, deleteSoftDrink, getLiqueurs, getSoftDrinks } from '../../services/productService';
+import { getProducts, createProduct, updateProduct, deleteProduct, updateProductAvailability, createLiqueur, deleteLiqueur, createSoftDrink, deleteSoftDrink, getLiqueurs, getSoftDrinks, getIceCreams, createIceCream, deleteIceCream } from '../../services/productService';
 
 const Inventory = () => {
   const [products, setProducts] = useState([]);
@@ -21,6 +21,10 @@ const Inventory = () => {
   const [newSoftDrink, setNewSoftDrink] = useState('');
   const [softDrinkMsg, setSoftDrinkMsg] = useState('');
   const [softDrinks, setSoftDrinks] = useState([]);
+  const [showIceCreams, setShowIceCreams] = useState(false);
+  const [iceCreams, setIceCreams] = useState([]);
+  const [newIceCream, setNewIceCream] = useState('');
+  const [iceCreamMsg, setIceCreamMsg] = useState('');
 
   const categoryOptions = [
     'Cervezas',
@@ -37,6 +41,7 @@ const Inventory = () => {
     loadProducts();
     loadLiqueurs();
     loadSoftDrinks();
+    loadIceCreams();
   }, []);
 
   const loadProducts = async () => {
@@ -68,6 +73,15 @@ const Inventory = () => {
       setSoftDrinks(data);
     } catch (err) {
       setSoftDrinkMsg('Error al cargar refrescos');
+    }
+  };
+
+  const loadIceCreams = async () => {
+    try {
+      const data = await getIceCreams();
+      setIceCreams(data);
+    } catch (err) {
+      setIceCreamMsg('Error al cargar sabores de helado');
     }
   };
 
@@ -217,6 +231,28 @@ const Inventory = () => {
     }
   };
 
+  const handleAddIceCream = async (e) => {
+    e.preventDefault();
+    try {
+      await createIceCream(newIceCream);
+      setNewIceCream('');
+      setIceCreamMsg('Sabor de helado añadido correctamente');
+      await loadIceCreams();
+    } catch (err) {
+      setIceCreamMsg('Error al añadir el sabor de helado');
+    }
+  };
+
+  const handleDeleteIceCream = async (id) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este sabor de helado?')) return;
+    try {
+      await deleteIceCream(id);
+      await loadIceCreams();
+    } catch (err) {
+      setIceCreamMsg('Error al eliminar el sabor de helado');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -342,6 +378,34 @@ const Inventory = () => {
               ))}
             </ul>
           </div>
+        </div>
+      )}
+
+      <div className="mt-8 flex justify-center">
+        <button
+          onClick={() => setShowIceCreams(v => !v)}
+          className="px-6 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold border border-blue-200 shadow-sm"
+        >
+          {showIceCreams ? 'Ocultar gestión de sabores de helado' : 'Gestionar sabores de helado'}
+        </button>
+      </div>
+      {showIceCreams && (
+        <div className="mt-8 max-w-xl mx-auto bg-white rounded-2xl shadow-md p-6 border border-blue-100">
+          <h2 className="text-xl font-bold text-blue-900 mb-4">Sabores de helado</h2>
+          <form onSubmit={handleAddIceCream} className="flex gap-2 mb-4">
+            <input type="text" value={newIceCream} onChange={e => setNewIceCream(e.target.value)} placeholder="Añadir sabor..." className="flex-1 border border-blue-200 rounded-lg px-4 py-2 bg-blue-50" />
+            <button type="submit" className="bg-blue-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-blue-700">Añadir</button>
+          </form>
+          {iceCreamMsg && <div className="mb-2 text-sm text-blue-700 font-semibold">{iceCreamMsg}</div>}
+          <ul className="space-y-2">
+            {iceCreams.length === 0 && <li className="text-blue-300">No hay sabores añadidos.</li>}
+            {iceCreams.map(i => (
+              <li key={i._id} className="flex justify-between items-center bg-blue-50 rounded-lg px-4 py-2">
+                <span>{i.name}</span>
+                <button onClick={() => handleDeleteIceCream(i._id)} className="text-red-600 hover:text-red-800 font-bold">Eliminar</button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
