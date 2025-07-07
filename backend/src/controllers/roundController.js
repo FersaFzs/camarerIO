@@ -216,24 +216,14 @@ export const updateRoundProducts = async (req, res) => {
 export const confirmTableService = async (req, res) => {
   try {
     const { tableNumber } = req.params;
-    
-    // Encontrar la ronda activa de la mesa
-    const round = await Round.findOne({ 
-      tableNumber, 
-      isPaid: false 
-    });
-
-    if (!round) {
-      return res.status(404).json({ message: 'No se encontró una ronda activa para esta mesa' });
-    }
-
-    // Marcar la ronda como ocupada (confirmar servicio)
-    round.isServiceConfirmed = true;
-    await round.save();
-
+    // Marcar todas las rondas no pagadas de la mesa como confirmadas
+    const result = await Round.updateMany(
+      { tableNumber, isPaid: false },
+      { $set: { isServiceConfirmed: true } }
+    );
     // Emitir evento
-    req.io.emit('rounds:update', { tableNumber })
-    res.json({ message: 'Servicio confirmado correctamente' });
+    req.io.emit('rounds:update', { tableNumber });
+    res.json({ message: 'Servicio confirmado correctamente', updatedCount: result.modifiedCount });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
