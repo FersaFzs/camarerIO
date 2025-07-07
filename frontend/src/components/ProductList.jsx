@@ -7,11 +7,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com'
 const SOCKET_URL = 'https://camarerio.onrender.com';
 
 async function fetchLiqueurs() {
-  const res = await fetch(`/api/licores`);
+  const res = await fetch(`${API_URL}/api/licores`);
   return await res.json();
 }
 async function fetchSoftDrinks() {
-  const res = await fetch(`/api/refrescos`);
+  const res = await fetch(`${API_URL}/api/refrescos`);
+  return await res.json();
+}
+async function fetchIceCreams() {
+  const res = await fetch(`${API_URL}/api/icecreams`);
   return await res.json();
 }
 
@@ -30,6 +34,10 @@ function ProductList({ onAddProducts, onCancel }) {
   const [softDrinks, setSoftDrinks] = useState([]);
   const [cubataProduct, setCubataProduct] = useState(null);
   const [showSelectedProducts, setShowSelectedProducts] = useState(false);
+  const [showIceCreamModal, setShowIceCreamModal] = useState(false);
+  const [iceCreamProduct, setIceCreamProduct] = useState(null);
+  const [iceCreamFlavors, setIceCreamFlavors] = useState([]);
+  const [selectedFlavors, setSelectedFlavors] = useState([]);
 
   const categoryOptions = [
     'Cervezas',
@@ -74,6 +82,7 @@ function ProductList({ onAddProducts, onCancel }) {
     loadProducts();
     fetchLiqueurs().then(setLiqueurs);
     fetchSoftDrinks().then(setSoftDrinks);
+    fetchIceCreams().then(setIceCreamFlavors);
 
     // Socket para productos
     const socket = io(SOCKET_URL);
@@ -182,6 +191,40 @@ function ProductList({ onAddProducts, onCancel }) {
     setShowCubataModal(false);
     setSelectedLicor('');
     setSelectedRefresco('');
+  };
+
+  const handleIceCreamClick = (product) => {
+    let bolas = 1;
+    if (product.name.toLowerCase().includes('2 bolas')) bolas = 2;
+    if (product.name.toLowerCase().includes('copa')) bolas = 3;
+    setSelectedFlavors(Array(bolas).fill(''));
+    setIceCreamProduct(product);
+    setShowIceCreamModal(true);
+  };
+
+  const handleAddIceCream = () => {
+    if (!iceCreamProduct) return;
+    const bolas = selectedFlavors.length;
+    if (selectedFlavors.some(f => !f)) return;
+    let name = '';
+    if (bolas === 1) name = `Helado + ${selectedFlavors[0]}`;
+    if (bolas === 2) name = `Helado + ${selectedFlavors[0]} + ${selectedFlavors[1]}`;
+    if (bolas === 3) name = `Copa de helado + ${selectedFlavors[0]} + ${selectedFlavors[1]} + ${selectedFlavors[2]}`;
+    // Crear producto personalizado en memoria (no en BD)
+    const customId = `icecream-${iceCreamProduct._id}-${selectedFlavors.join('-')}`;
+    const customProduct = {
+      ...iceCreamProduct,
+      _id: customId,
+      name,
+    };
+    setProducts(prev => [...prev, customProduct]);
+    setSelectedProducts(prev => ({
+      ...prev,
+      [customId]: (prev[customId] || 0) + 1
+    }));
+    setShowIceCreamModal(false);
+    setIceCreamProduct(null);
+    setSelectedFlavors([]);
   };
 
   // Agrupar productos por categoría, excluyendo 'Tapas'
@@ -338,42 +381,49 @@ function ProductList({ onAddProducts, onCancel }) {
                         </div>
                       </div>
                     )}
-                    {prods.map(product => (
-                      <div
-                        key={product._id}
-                        className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 flex flex-col items-center p-2.5 ${selectedProducts[product._id] ? 'border-green-500 ring-2 ring-green-200' : 'border-neutral-200'} ${!product.available ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
-                        onClick={product.available ? () => handleQuantityChange(product._id, 1) : undefined}
-                      >
-                        {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-xl mb-1" />
-                        ) : (
-                          <div className="w-20 h-20 bg-green-50 flex items-center justify-center rounded-xl mb-1 text-green-200">Sin imagen</div>
-                        )}
-                        <div className="text-center w-full">
-                          <h3 className="text-sm font-semibold text-neutral-900 truncate">{product.name}</h3>
-                          <p className="text-green-700 font-bold text-sm">{product.price.toFixed(2)} €</p>
-                          {!product.available && (
-                            <span className="absolute top-2 left-2 bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full shadow">No disponible</span>
+                    {prods.map(product => {
+                      const isIceCream = product.category === 'Helados' && (
+                        product.name.toLowerCase().includes('1 bola') ||
+                        product.name.toLowerCase().includes('2 bolas') ||
+                        product.name.toLowerCase().includes('copa')
+                      );
+                      return (
+                        <div
+                          key={product._id}
+                          className={`relative bg-white rounded-2xl shadow-md border-2 transition-all duration-150 flex flex-col items-center p-2.5 ${selectedProducts[product._id] ? 'border-green-500 ring-2 ring-green-200' : 'border-neutral-200'} ${!product.available ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                          onClick={product.available ? (isIceCream ? () => handleIceCreamClick(product) : () => handleQuantityChange(product._id, 1)) : undefined}
+                        >
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-xl mb-1" />
+                          ) : (
+                            <div className="w-20 h-20 bg-green-50 flex items-center justify-center rounded-xl mb-1 text-green-200">Sin imagen</div>
+                          )}
+                          <div className="text-center w-full">
+                            <h3 className="text-sm font-semibold text-neutral-900 truncate">{product.name}</h3>
+                            <p className="text-green-700 font-bold text-sm">{product.price.toFixed(2)} €</p>
+                            {!product.available && (
+                              <span className="absolute top-2 left-2 bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full shadow">No disponible</span>
+                            )}
+                          </div>
+                          {selectedProducts[product._id] > 0 && (
+                            <div className="absolute top-1 right-1 bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-base font-bold shadow">
+                              {selectedProducts[product._id]}
+                            </div>
+                          )}
+                          {selectedProducts[product._id] > 0 && (
+                            <div className="flex w-full mt-1 gap-1 justify-center">
+                              <button
+                                type="button"
+                                className="bg-green-100 text-green-700 rounded-lg w-full py-1.5 flex items-center justify-center text-base font-bold hover:bg-green-200 transition-colors"
+                                onClick={e => { e.stopPropagation(); handleQuantityChange(product._id, -1); }}
+                              >
+                                -
+                              </button>
+                            </div>
                           )}
                         </div>
-                        {selectedProducts[product._id] > 0 && (
-                          <div className="absolute top-1 right-1 bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-base font-bold shadow">
-                            {selectedProducts[product._id]}
-                          </div>
-                        )}
-                        {selectedProducts[product._id] > 0 && (
-                          <div className="flex w-full mt-1 gap-1 justify-center">
-                            <button
-                              type="button"
-                              className="bg-green-100 text-green-700 rounded-lg w-full py-1.5 flex items-center justify-center text-base font-bold hover:bg-green-200 transition-colors"
-                              onClick={e => { e.stopPropagation(); handleQuantityChange(product._id, -1); }}
-                            >
-                              -
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -532,6 +582,47 @@ function ProductList({ onAddProducts, onCancel }) {
                 disabled={!selectedLicor || !selectedRefresco}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50"
                 onClick={handleCubataAdd}
+              >
+                Añadir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de selección de sabores de helado */}
+      {showIceCreamModal && iceCreamProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+            <h2 className="text-2xl font-bold mb-4 text-pink-900">Selecciona tus sabores</h2>
+            {selectedFlavors.map((flavor, idx) => (
+              <div className="mb-4" key={idx}>
+                <label className="block text-pink-900 font-medium mb-2">Sabor {idx + 1}</label>
+                <select
+                  value={flavor}
+                  onChange={e => setSelectedFlavors(flavs => flavs.map((f, i) => i === idx ? e.target.value : f))}
+                  className="w-full border border-pink-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-pink-50"
+                >
+                  <option value="">Selecciona un sabor</option>
+                  {iceCreamFlavors.map(s => (
+                    <option key={s._id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                type="button"
+                onClick={() => { setShowIceCreamModal(false); setIceCreamProduct(null); setSelectedFlavors([]); }}
+                className="px-4 py-2 text-pink-700 hover:text-pink-900"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={selectedFlavors.some(f => !f)}
+                className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors font-semibold disabled:opacity-50"
+                onClick={handleAddIceCream}
               >
                 Añadir
               </button>
