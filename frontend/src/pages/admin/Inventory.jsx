@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct, updateProductAvailability } from '../../services/productService';
+import { getProducts, createProduct, updateProduct, deleteProduct, updateProductAvailability, createLiqueur, deleteLiqueur, createSoftDrink, deleteSoftDrink, getLiqueurs, getSoftDrinks } from '../../services/productService';
 
 const Inventory = () => {
   const [products, setProducts] = useState([]);
@@ -35,6 +35,8 @@ const Inventory = () => {
 
   useEffect(() => {
     loadProducts();
+    loadLiqueurs();
+    loadSoftDrinks();
   }, []);
 
   const loadProducts = async () => {
@@ -48,6 +50,24 @@ const Inventory = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadLiqueurs = async () => {
+    try {
+      const data = await getLiqueurs();
+      setLiqueurs(data);
+    } catch (err) {
+      setLiqueurMsg('Error al cargar licores');
+    }
+  };
+
+  const loadSoftDrinks = async () => {
+    try {
+      const data = await getSoftDrinks();
+      setSoftDrinks(data);
+    } catch (err) {
+      setSoftDrinkMsg('Error al cargar refrescos');
     }
   };
 
@@ -146,13 +166,10 @@ const Inventory = () => {
   const handleAddLiqueur = async (e) => {
     e.preventDefault();
     try {
-      const formData = new FormData();
-      formData.append('name', newLiqueur);
-      formData.append('category', 'Licores');
-      await createProduct(formData);
+      await createLiqueur(newLiqueur);
       setNewLiqueur('');
       setLiqueurMsg('Licor añadido correctamente');
-      await loadProducts();
+      await loadLiqueurs();
     } catch (err) {
       setError('Error al añadir el licor');
       console.error(err);
@@ -165,8 +182,8 @@ const Inventory = () => {
     }
 
     try {
-      await deleteProduct(id);
-      await loadProducts();
+      await deleteLiqueur(id);
+      await loadLiqueurs();
     } catch (err) {
       setError('Error al eliminar el licor');
       console.error(err);
@@ -176,13 +193,10 @@ const Inventory = () => {
   const handleAddSoftDrink = async (e) => {
     e.preventDefault();
     try {
-      const formData = new FormData();
-      formData.append('name', newSoftDrink);
-      formData.append('category', 'Refrescos');
-      await createProduct(formData);
+      await createSoftDrink(newSoftDrink);
       setNewSoftDrink('');
       setSoftDrinkMsg('Refresco añadido correctamente');
-      await loadProducts();
+      await loadSoftDrinks();
     } catch (err) {
       setError('Error al añadir el refresco');
       console.error(err);
@@ -195,8 +209,8 @@ const Inventory = () => {
     }
 
     try {
-      await deleteProduct(id);
-      await loadProducts();
+      await deleteSoftDrink(id);
+      await loadSoftDrinks();
     } catch (err) {
       setError('Error al eliminar el refresco');
       console.error(err);
