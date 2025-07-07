@@ -99,4 +99,10 @@ export const deleteIceCream = async (id) => {
   const res = await fetch(`${API_URL}/api/icecreams/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Error al eliminar sabor de helado');
   return res.json();
-}; 
+};
+
+export async function getActiveRounds() {
+  const res = await fetch(`${API_URL}/api/rounds/active`);
+  if (!res.ok) throw new Error('Error al obtener las comandas activas');
+  return await res.json();
+} 
