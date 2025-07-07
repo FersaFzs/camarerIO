@@ -89,6 +89,7 @@ export const createTestUser = async () => {
     // Eliminar usuarios existentes para empezar limpio
     await User.deleteOne({ username: 'admin' })
     await User.deleteOne({ username: 'camarero' })
+    await User.deleteOne({ username: 'barra' })
     console.log('Usuarios existentes eliminados')
 
     // Crear usuario admin
@@ -127,9 +128,27 @@ export const createTestUser = async () => {
     const waiterMatch = await bcrypt.compare('camarero123', waiter.password)
     console.log('Verificación contraseña camarero:', waiterMatch)
 
+    // Crear usuario barra
+    const barra = await User.create({
+      username: 'barra',
+      password: 'barra123',
+      name: 'Barra',
+      role: 'barra',
+      email: 'barra@waiterapp.com'
+    })
+    console.log('Usuario barra creado:', {
+      ...barra.toObject(),
+      password: barra.password,
+      role: barra.role
+    })
+    // Verificar contraseña barra
+    const barraMatch = await bcrypt.compare('barra123', barra.password)
+    console.log('Verificación contraseña barra:', barraMatch)
+
     // Verificar usuarios en la base de datos
     const adminInDb = await User.findOne({ username: 'admin' })
     const waiterInDb = await User.findOne({ username: 'camarero' })
+    const barraInDb = await User.findOne({ username: 'barra' })
     
     console.log('Verificación final:')
     console.log('Admin en DB:', {
@@ -141,6 +160,11 @@ export const createTestUser = async () => {
       ...waiterInDb.toObject(),
       password: waiterInDb.password,
       role: waiterInDb.role
+    })
+    console.log('Barra en DB:', {
+      ...barraInDb.toObject(),
+      password: barraInDb.password,
+      role: barraInDb.role
     })
 
   } catch (error) {

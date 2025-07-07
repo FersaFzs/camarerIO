@@ -8,6 +8,7 @@ import Settings from './pages/admin/Settings'
 import Login from './pages/Login'
 import PrivateRoute from './components/PrivateRoute'
 import Advanced from './pages/admin/Advanced'
+import BarraView from './views/BarraView'
 
 function App() {
   return (
@@ -38,6 +39,13 @@ function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="advanced" element={<Advanced />} />
       </Route>
+
+      {/* Ruta para barra/comandas */}
+      <Route path="/barra" element={
+        <PrivateRoute allowedRoles={['barra']}>
+          <BarraView />
+        </PrivateRoute>
+      } />
     </Routes>
   )
 }
