@@ -146,7 +146,10 @@ const Inventory = () => {
   const handleAddLiqueur = async (e) => {
     e.preventDefault();
     try {
-      await createProduct(new FormData([['name', newLiqueur], ['category', 'Licores']]));
+      const formData = new FormData();
+      formData.append('name', newLiqueur);
+      formData.append('category', 'Licores');
+      await createProduct(formData);
       setNewLiqueur('');
       setLiqueurMsg('Licor añadido correctamente');
       await loadProducts();
@@ -173,7 +176,10 @@ const Inventory = () => {
   const handleAddSoftDrink = async (e) => {
     e.preventDefault();
     try {
-      await createProduct(new FormData([['name', newSoftDrink], ['category', 'Refrescos']]));
+      const formData = new FormData();
+      formData.append('name', newSoftDrink);
+      formData.append('category', 'Refrescos');
+      await createProduct(formData);
       setNewSoftDrink('');
       setSoftDrinkMsg('Refresco añadido correctamente');
       await loadProducts();
