@@ -305,4 +305,14 @@ export const moveTableRounds = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error al mover las rondas', error: error.message });
   }
+};
+
+// Obtener todas las rondas activas (no pagadas) de todas las mesas
+export const getAllActiveRounds = async (req, res) => {
+  try {
+    const rounds = await Round.find({ isPaid: false }).populate('products.product');
+    res.status(200).json(rounds);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }; 

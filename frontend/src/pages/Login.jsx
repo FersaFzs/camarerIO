@@ -23,7 +23,9 @@ function Login() {
       console.log('Login exitoso - Datos completos:', userData)
       
       // Redirigir según el rol
-      const redirectPath = userData.role === 'admin' ? '/admin' : '/mesas'
+      let redirectPath = '/mesas';
+      if (userData.role === 'admin') redirectPath = '/admin';
+      else if (userData.role === 'barra') redirectPath = '/barra';
       console.log('Redirigiendo a:', redirectPath)
       navigate(redirectPath)
     } catch (error) {
