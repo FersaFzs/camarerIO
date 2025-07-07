@@ -7,11 +7,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com'
 const SOCKET_URL = 'https://camarerio.onrender.com';
 
 async function fetchLiqueurs() {
-  const res = await fetch(`${API_URL}/licores`);
+  const res = await fetch(`/api/licores`);
   return await res.json();
 }
 async function fetchSoftDrinks() {
-  const res = await fetch(`${API_URL}/refrescos`);
+  const res = await fetch(`/api/refrescos`);
   return await res.json();
 }
 
