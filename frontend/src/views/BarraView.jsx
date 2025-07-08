@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import MesaBarra from '../components/MesaBarra';
-import { fetchCustomTables, fetchTableStatuses, updateTablePosition } from '../services/roundService';
+import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
@@ -26,6 +26,25 @@ export default function BarraView() {
   // Helper para guardar posición de cualquier mesa
   const saveTablePosition = async (table, x, y) => {
     try {
+      // Si la mesa es numerada y no tiene _id real, crearla como personalizada
+      if (table._id.startsWith('mesa-')) {
+        // Buscar si ya existe una personalizada con ese número
+        let custom = tables.find(t => !t._id.startsWith('mesa-') && t.number === table.number);
+        if (!custom) {
+          // Crear en backend
+          const created = await createCustomTable(table.name);
+          custom = { ...created, isNumbered: false };
+          // Reemplazar la mesa numerada por la personalizada
+          setTables(prev => prev.map(t => t._id === table._id ? { ...custom, x, y } : t));
+          await updateTablePosition(custom._id, x, y);
+          return;
+        } else {
+          // Ya existe personalizada, usar su _id
+          setTables(prev => prev.map(t => t._id === table._id ? { ...custom, x, y } : t));
+          await updateTablePosition(custom._id, x, y);
+          return;
+        }
+      }
       await updateTablePosition(table._id, x, y);
       setTables(prev => prev.map(t => t._id === table._id ? { ...t, x, y } : t));
     } catch (err) {
@@ -33,29 +52,36 @@ export default function BarraView() {
     }
   };
 
-  // Drag & drop manual (no nativo)
-  // Handler para mouse down
-  const handleMouseDown = (e, table) => {
+  // Drag & drop manual (ratón y táctil)
+  const getEventCoords = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else {
+      return { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const handlePointerDown = (e, table) => {
     if (!editLayout) return;
     const rect = areaRef.current.getBoundingClientRect();
+    const { x, y } = getEventCoords(e);
     setDragInfo({
       id: table._id,
-      offsetX: e.clientX - (table.x || (rect.left + 40)),
-      offsetY: e.clientY - (table.y || (rect.top + 40)),
+      offsetX: x - (table.x || (rect.left + 40)),
+      offsetY: y - (table.y || (rect.top + 40)),
     });
   };
 
-  // Handler para mouse move
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!editLayout || !dragInfo) return;
     const rect = areaRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - dragInfo.offsetX;
-    const y = e.clientY - rect.top - dragInfo.offsetY;
-    setTables(prev => prev.map(t => t._id === dragInfo.id ? { ...t, x, y } : t));
+    const { x, y } = getEventCoords(e);
+    const newX = x - rect.left - dragInfo.offsetX;
+    const newY = y - rect.top - dragInfo.offsetY;
+    setTables(prev => prev.map(t => t._id === dragInfo.id ? { ...t, x: newX, y: newY } : t));
   };
 
-  // Handler para mouse up
-  const handleMouseUp = async (e) => {
+  const handlePointerUp = async (e) => {
     if (!editLayout || !dragInfo) return;
     const table = tables.find(t => t._id === dragInfo.id);
     if (table) {
@@ -67,11 +93,15 @@ export default function BarraView() {
   // Efecto para escuchar eventos de mouse
   useEffect(() => {
     if (!editLayout) return;
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
     };
   }, [editLayout, dragInfo]); // Añadir dependencias
 
@@ -248,7 +278,8 @@ export default function BarraView() {
                   transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
                   opacity: isDragging ? 0.85 : 1,
                 }}
-                onMouseDown={e => handleMouseDown(e, table)}
+                onMouseDown={e => handlePointerDown(e, table)}
+                onTouchStart={e => handlePointerDown(e, table)}
               >
                 <MesaBarra
                   numero={table.number}
@@ -289,7 +320,7 @@ export default function BarraView() {
                   ))}
                 </div>
                 <button
-                  className="w-full py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors"
+                  className="w-full py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors mb-2"
                   onClick={() => { navigate(`/mesas/${selectedTable.number}`); }}
                 >
                   Detalles
@@ -299,7 +330,7 @@ export default function BarraView() {
               <>
                 <div className="text-center text-green-700 text-lg mb-6">La mesa está vacía</div>
                 <button
-                  className="w-full py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors"
+                  className="w-full py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors mb-2"
                   onClick={() => { navigate(`/mesas/${selectedTable.number}`); }}
                 >
                   Detalles
