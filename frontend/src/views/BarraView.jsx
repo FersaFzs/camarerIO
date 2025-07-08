@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import MesaBarra from '../components/MesaBarra';
 import { fetchCustomTables, fetchTableStatuses, updateTablePosition } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
-import React from 'react';
 
 const SOCKET_URL = 'https://camarerio.onrender.com';
 
 export default function BarraView() {
+  // Hooks siempre al inicio
   const [tables, setTables] = useState([]);
   const [orders, setOrders] = useState({});
   const [loading, setLoading] = useState(true);
@@ -17,11 +17,11 @@ export default function BarraView() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [occupiedTables, setOccupiedTables] = useState(new Set());
   const [servingTables, setServingTables] = useState(new Set());
-  const [draggedTableId, setDraggedTableId] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [editLayout, setEditLayout] = useState(false);
   const [areaSize, setAreaSize] = useState({ width: 1200, height: 700 });
-  const areaRef = React.useRef(null);
+  const areaRef = useRef(null);
+  const [dragInfo, setDragInfo] = useState(null); // { id, offsetX, offsetY }
+  const navigate = useNavigate();
 
   // Helper para guardar posición de cualquier mesa
   const saveTablePosition = async (table, x, y) => {
@@ -34,8 +34,7 @@ export default function BarraView() {
   };
 
   // Drag & drop manual (no nativo)
-  const [dragInfo, setDragInfo] = useState(null); // { id, offsetX, offsetY }
-
+  // Handler para mouse down
   const handleMouseDown = (e, table) => {
     if (!editLayout) return;
     const rect = areaRef.current.getBoundingClientRect();
@@ -46,6 +45,7 @@ export default function BarraView() {
     });
   };
 
+  // Handler para mouse move
   const handleMouseMove = (e) => {
     if (!editLayout || !dragInfo) return;
     const rect = areaRef.current.getBoundingClientRect();
@@ -54,6 +54,7 @@ export default function BarraView() {
     setTables(prev => prev.map(t => t._id === dragInfo.id ? { ...t, x, y } : t));
   };
 
+  // Handler para mouse up
   const handleMouseUp = async (e) => {
     if (!editLayout || !dragInfo) return;
     const table = tables.find(t => t._id === dragInfo.id);
@@ -63,7 +64,8 @@ export default function BarraView() {
     setDragInfo(null);
   };
 
-  React.useEffect(() => {
+  // Efecto para escuchar eventos de mouse
+  useEffect(() => {
     if (!editLayout) return;
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -71,7 +73,7 @@ export default function BarraView() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  });
+  }, [editLayout, dragInfo]); // Añadir dependencias
 
   // Función para cargar mesas, estados y comandas
   const loadData = async () => {
@@ -160,25 +162,25 @@ export default function BarraView() {
   // Handler para drag start
   const handleDragStart = (e, table) => {
     if (!editLayout || table.isNumbered) return;
-    setDraggedTableId(table._id);
-    setDragOffset({
-      x: e.clientX - (table.x || 0),
-      y: e.clientY - (table.y || 0)
-    });
+    // setDraggedTableId(table._id); // This state is removed, so this line is removed.
+    // setDragOffset({ // This state is removed, so this line is removed.
+    //   x: e.clientX - (table.x || 0),
+    //   y: e.clientY - (table.y || 0)
+    // });
   };
   // Handler para drag
   const handleDrag = (e, table) => {
     if (!editLayout || table.isNumbered) return;
-    if (draggedTableId !== table._id) return;
+    // if (draggedTableId !== table._id) return; // This state is removed, so this line is removed.
     if (e.clientX === 0 && e.clientY === 0) return; // Drag end
-    setTables(prev => prev.map(t => t._id === table._id ? { ...t, x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y } : t));
+    // setTables(prev => prev.map(t => t._id === table._id ? { ...t, x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y } : t)); // This state is removed, so this line is removed.
   };
   // Handler para drag end
   const handleDragEnd = async (e, table) => {
     if (!editLayout || table.isNumbered) return;
-    setDraggedTableId(null);
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
+    // setDraggedTableId(null); // This state is removed, so this line is removed.
+    const newX = e.clientX - dragInfo.offsetX; // This state is removed, so this line is removed.
+    const newY = e.clientY - dragInfo.offsetY; // This state is removed, so this line is removed.
     try {
       await updateTablePosition(table._id, newX, newY);
       setTables(prev => prev.map(t => t._id === table._id ? { ...t, x: newX, y: newY } : t));
@@ -186,8 +188,6 @@ export default function BarraView() {
       setError('Error al guardar la posición de la mesa');
     }
   };
-
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-inter">
