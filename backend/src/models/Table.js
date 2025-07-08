@@ -6,10 +6,13 @@ const tableSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  number: {
+  x: {
     type: Number,
-    required: true,
-    unique: true
+    default: 0
+  },
+  y: {
+    type: Number,
+    default: 0
   },
   createdAt: {
     type: Date,

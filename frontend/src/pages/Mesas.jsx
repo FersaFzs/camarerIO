@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Mesa from '../components/Mesa'
-import { fetchTableStatuses, createCustomTable, confirmTableService, fetchCustomTables, deleteCustomTable } from '../services/roundService'
+import { fetchTableStatuses, createCustomTable, confirmTableService, fetchCustomTables, deleteCustomTable, updateTablePosition } from '../services/roundService'
 import { useNavigate } from 'react-router-dom'
 import '../mesas-modern.css'
 import logoApalanque from '../assets/logo-apalanque.png'
@@ -20,6 +20,9 @@ function Mesas() {
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
   const [customTables, setCustomTables] = useState([])
+  // Estado para forzar re-render tras mover
+  const [draggedTableId, setDraggedTableId] = useState(null)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   const navigate = useNavigate()
 
@@ -161,6 +164,34 @@ function Mesas() {
     }
   }
 
+  // Handler para drag start
+  const handleDragStart = (e, table) => {
+    setDraggedTableId(table._id)
+    setDragOffset({
+      x: e.clientX - (table.x || 0),
+      y: e.clientY - (table.y || 0)
+    })
+  }
+  // Handler para drag
+  const handleDrag = (e, table) => {
+    if (draggedTableId !== table._id) return
+    if (e.clientX === 0 && e.clientY === 0) return // Drag end
+    // Actualizar posición visual temporalmente
+    setCustomTables(prev => prev.map(t => t._id === table._id ? { ...t, x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y } : t))
+  }
+  // Handler para drag end
+  const handleDragEnd = async (e, table) => {
+    setDraggedTableId(null)
+    const newX = e.clientX - dragOffset.x
+    const newY = e.clientY - dragOffset.y
+    try {
+      await updateTablePosition(table._id, newX, newY)
+      setCustomTables(prev => prev.map(t => t._id === table._id ? { ...t, x: newX, y: newY } : t))
+    } catch (err) {
+      setError('Error al guardar la posición de la mesa')
+    }
+  }
+
   return (
     <div className="min-h-screen w-full bg-neutral-50 font-inter flex flex-col items-center justify-start">
       {/* Leyenda minimalista */}
@@ -186,58 +217,69 @@ function Mesas() {
           </div>
         </div>
       </div>
-      {/* Grid de mesas */}
-      <div className="w-full max-w-4xl mx-auto px-2 pb-12 flex flex-col items-center">
-        {isLoadingStatuses ? (
-          <div className="text-center text-neutral-400 py-12">Cargando estados de mesas...</div>
-        ) : errorStatuses ? (
-          <div className="text-center text-red-500 py-12">{errorStatuses}</div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 w-full justify-center">
-            {[...Array(10)].map((_, index) => {
-              const numeroMesa = index + 1
-              const isOccupied = occupiedTables.has(numeroMesa.toString())
-              const isServing = servingTables.has(numeroMesa.toString())
-              return (
-                <Mesa 
-                  key={numeroMesa}
-                  numero={numeroMesa}
-                  isOccupied={isOccupied}
-                  isServing={isServing}
-                  onConfirmService={handleConfirmService}
-                />
-              )
-            })}
-            {customTables.map((table) => {
-              const isOccupied = occupiedTables.has(table.number.toString())
-              const isServing = servingTables.has(table.number.toString())
-              return (
-                <Mesa
-                  key={table._id}
-                  numero={table.number}
-                  isOccupied={isOccupied}
-                  isServing={isServing}
-                  name={table.name}
-                  isCustom={true}
-                  onConfirmService={handleConfirmService}
-                  onDelete={() => handleDeleteCustomTable(table._id)}
-                />
-              )
-            })}
-            {/* Botón de nueva mesa */}
-            <div 
-              onClick={() => setShowCustomTableModal(true)}
-              className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-green-300 rounded-2xl bg-white cursor-pointer transition-all hover:border-green-500 hover:bg-green-50 group min-h-[160px] shadow-sm"
-            >
-              <div className="w-14 h-14 mb-2 flex items-center justify-center rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-green-700">Nueva Mesa</span>
+      {/* Layout libre de mesas */}
+      <div className="relative w-full max-w-4xl h-[600px] bg-white border border-green-100 rounded-2xl shadow-md overflow-hidden mx-auto px-2 pb-12 flex flex-col items-center">
+        {/* Mesas numeradas (no movibles, layout fijo) */}
+        {[...Array(10)].map((_, index) => {
+          const numeroMesa = index + 1
+          const isOccupied = occupiedTables.has(numeroMesa.toString())
+          const isServing = servingTables.has(numeroMesa.toString())
+          // Distribuir en círculo o grid fijo
+          const angle = (2 * Math.PI * index) / 10
+          const radius = 220
+          const centerX = 400
+          const centerY = 300
+          const x = centerX + radius * Math.cos(angle) - 60
+          const y = centerY + radius * Math.sin(angle) - 60
+          return (
+            <div key={numeroMesa} style={{ position: 'absolute', left: x, top: y }}>
+              <Mesa
+                numero={numeroMesa}
+                isOccupied={isOccupied}
+                isServing={isServing}
+                onConfirmService={handleConfirmService}
+              />
             </div>
+          )
+        })}
+        {/* Mesas personalizadas (movibles) */}
+        {customTables.map((table) => {
+          const isOccupied = occupiedTables.has(table.number.toString())
+          const isServing = servingTables.has(table.number.toString())
+          return (
+            <div
+              key={table._id}
+              style={{ position: 'absolute', left: table.x || 50, top: table.y || 50, zIndex: draggedTableId === table._id ? 10 : 1, cursor: 'grab' }}
+              draggable
+              onDragStart={e => handleDragStart(e, table)}
+              onDrag={e => handleDrag(e, table)}
+              onDragEnd={e => handleDragEnd(e, table)}
+            >
+              <Mesa
+                numero={table.number}
+                isOccupied={isOccupied}
+                isServing={isServing}
+                name={table.name}
+                isCustom={true}
+                onConfirmService={handleConfirmService}
+                onDelete={() => handleDeleteCustomTable(table._id)}
+              />
+            </div>
+          )
+        })}
+        {/* Botón de nueva mesa */}
+        <div
+          onClick={() => setShowCustomTableModal(true)}
+          className="absolute bottom-8 right-8 flex flex-col items-center justify-center p-6 border-2 border-dashed border-green-300 rounded-2xl bg-white cursor-pointer transition-all hover:border-green-500 hover:bg-green-50 group min-h-[160px] shadow-sm"
+          style={{ zIndex: 20 }}
+        >
+          <div className="w-14 h-14 mb-2 flex items-center justify-center rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
           </div>
-        )}
+          <span className="text-lg font-semibold text-green-700">Nueva Mesa</span>
+        </div>
       </div>
       {/* Mensaje de éxito al crear mesa */}
       {successMessage && (

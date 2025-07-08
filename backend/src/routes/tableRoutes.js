@@ -1,5 +1,5 @@
 import express from 'express'
-import { createCustomTable, getCustomTables, deleteCustomTable } from '../controllers/tableController.js'
+import { createCustomTable, getCustomTables, deleteCustomTable, updateTablePosition } from '../controllers/tableController.js'
 
 const router = express.Router()
 
@@ -9,5 +9,6 @@ router.get('/', getCustomTables)
 router.post('/custom', createCustomTable)
 // Eliminar una mesa personalizada por su id
 router.delete('/:id', deleteCustomTable)
+router.put('/:id/position', updateTablePosition)
 
 export default router 

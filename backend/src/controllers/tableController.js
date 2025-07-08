@@ -50,4 +50,23 @@ export const deleteCustomTable = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
+}
+
+// Actualizar la posición de una mesa personalizada
+export const updateTablePosition = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { x, y } = req.body;
+    const table = await Table.findById(id);
+    if (!table) {
+      return res.status(404).json({ message: 'Mesa no encontrada' });
+    }
+    if (typeof x === 'number') table.x = x;
+    if (typeof y === 'number') table.y = y;
+    await table.save();
+    req.io.emit('tables:update');
+    res.status(200).json(table);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 } 
