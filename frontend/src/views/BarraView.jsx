@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Mesa from '../components/Mesa';
+import MesaBarra from '../components/MesaBarra';
 import { fetchCustomTables, fetchTableStatuses, updateTablePosition } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
@@ -163,17 +163,13 @@ export default function BarraView() {
                 onDragEnd={e => handleDragEnd(e, table)}
                 onClick={() => { if (!editLayout) { setSelectedTable(table); setShowOrderModal(true); } }}
               >
-                <Mesa
+                <MesaBarra
                   numero={table.number}
                   name={table.name}
                   isOccupied={isOccupied}
                   isServing={isServing}
+                  hasOrder={hasOrder}
                 />
-                {hasOrder && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg animate-pulse z-20">
-                    ¡Comanda pendiente!
-                  </span>
-                )}
               </div>
             );
           })}
