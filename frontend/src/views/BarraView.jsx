@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import Mesa from '../components/Mesa';
-import { fetchCustomTables, fetchTableStatuses } from '../services/roundService';
+import { fetchCustomTables, fetchTableStatuses, updateTablePosition } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 
 const SOCKET_URL = 'https://camarerio.onrender.com';
 
@@ -15,6 +16,9 @@ export default function BarraView() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [occupiedTables, setOccupiedTables] = useState(new Set());
   const [servingTables, setServingTables] = useState(new Set());
+  const [draggedTableId, setDraggedTableId] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const navigate = useNavigate();
 
   // Función para cargar mesas, estados y comandas
   const loadData = async () => {
@@ -100,38 +104,102 @@ export default function BarraView() {
     };
   };
 
+  // Handler para drag start
+  const handleDragStart = (e, table) => {
+    if (table.isNumbered) return;
+    setDraggedTableId(table._id);
+    setDragOffset({
+      x: e.clientX - (table.x || 0),
+      y: e.clientY - (table.y || 0)
+    });
+  };
+  // Handler para drag
+  const handleDrag = (e, table) => {
+    if (table.isNumbered) return;
+    if (draggedTableId !== table._id) return;
+    if (e.clientX === 0 && e.clientY === 0) return; // Drag end
+    setTables(prev => prev.map(t => t._id === table._id ? { ...t, x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y } : t));
+  };
+  // Handler para drag end
+  const handleDragEnd = async (e, table) => {
+    if (table.isNumbered) return;
+    setDraggedTableId(null);
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+    try {
+      await updateTablePosition(table._id, newX, newY);
+      setTables(prev => prev.map(t => t._id === table._id ? { ...t, x: newX, y: newY } : t));
+    } catch (err) {
+      setError('Error al guardar la posición de la mesa');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col font-inter">
       {/* Header */}
       <div className="w-full flex items-center justify-between h-20 px-10 bg-white border-b border-green-200 shadow-sm sticky top-0 left-0 z-50">
         <h1 className="text-3xl font-extrabold text-green-800 tracking-tight">Comandas</h1>
       </div>
-      {/* Grid de mesas */}
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 w-full">
-          {tables.map(table => {
-            const { isOccupied, isServing } = getMesaStatus(table);
-            const hasOrder = orders[table.number] && orders[table.number].length > 0;
-            return (
-              <div key={table._id} className="relative group">
-                <div onClick={() => hasOrder && (setSelectedTable(table), setShowOrderModal(true))} className="cursor-pointer">
-                  <Mesa
-                    numero={table.number}
-                    name={table.name}
-                    isOccupied={isOccupied}
-                    isServing={isServing}
-                  />
-                  {/* Badge de comanda pendiente */}
-                  {hasOrder && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg animate-pulse z-20">
-                      ¡Comanda pendiente!
-                    </span>
-                  )}
-                </div>
+      {/* Layout libre de mesas */}
+      <div className="relative w-full max-w-7xl h-[700px] bg-white border border-green-100 rounded-2xl shadow-md overflow-hidden mx-auto px-4 py-10">
+        {/* Mesas numeradas (no movibles, layout fijo) */}
+        {tables.filter(t => t.isNumbered).map((table, index) => {
+          // Distribuir en círculo
+          const angle = (2 * Math.PI * index) / 10;
+          const radius = 280;
+          const centerX = 600;
+          const centerY = 350;
+          const x = centerX + radius * Math.cos(angle) - 60;
+          const y = centerY + radius * Math.sin(angle) - 60;
+          const { isOccupied, isServing } = getMesaStatus(table);
+          const hasOrder = orders[table.number] && orders[table.number].length > 0;
+          return (
+            <div key={table._id} style={{ position: 'absolute', left: x, top: y }}>
+              <div onClick={() => hasOrder && (setSelectedTable(table), setShowOrderModal(true))} className="cursor-pointer">
+                <Mesa
+                  numero={table.number}
+                  name={table.name}
+                  isOccupied={isOccupied}
+                  isServing={isServing}
+                />
+                {hasOrder && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg animate-pulse z-20">
+                    ¡Comanda pendiente!
+                  </span>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+        {/* Mesas personalizadas (movibles) */}
+        {tables.filter(t => !t.isNumbered).map((table) => {
+          const { isOccupied, isServing } = getMesaStatus(table);
+          const hasOrder = orders[table.number] && orders[table.number].length > 0;
+          return (
+            <div
+              key={table._id}
+              style={{ position: 'absolute', left: table.x || 50, top: table.y || 50, zIndex: draggedTableId === table._id ? 10 : 1, cursor: 'grab' }}
+              draggable
+              onDragStart={e => handleDragStart(e, table)}
+              onDrag={e => handleDrag(e, table)}
+              onDragEnd={e => handleDragEnd(e, table)}
+            >
+              <div onClick={() => hasOrder && (setSelectedTable(table), setShowOrderModal(true))} className="cursor-pointer">
+                <Mesa
+                  numero={table.number}
+                  name={table.name}
+                  isOccupied={isOccupied}
+                  isServing={isServing}
+                />
+                {hasOrder && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg animate-pulse z-20">
+                    ¡Comanda pendiente!
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
       {/* Modal de comanda */}
       {showOrderModal && selectedTable && (
@@ -155,10 +223,16 @@ export default function BarraView() {
               ))}
             </div>
             <button
-              className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-lg shadow hover:bg-green-700 transition-colors"
+              className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-lg shadow hover:bg-green-700 transition-colors mb-4"
               onClick={() => setShowOrderModal(false)}
             >
               Listo
+            </button>
+            <button
+              className="w-full py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors"
+              onClick={() => { window.open(`/mesas/${selectedTable.number}`, '_blank'); }}
+            >
+              Ver gestión avanzada
             </button>
           </div>
         </div>
