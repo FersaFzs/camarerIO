@@ -153,14 +153,15 @@ export default function BarraView() {
           {tables.map(table => {
             const { isOccupied, isServing } = getMesaStatus(table);
             const hasOrder = orders[table.number] && orders[table.number].length > 0;
+            const isDragging = editLayout && draggedTableId === table._id;
             return (
               <div
                 key={table._id}
-                style={editLayout && !table.isNumbered ? { position: 'relative', left: table.x || 0, top: table.y || 0, zIndex: draggedTableId === table._id ? 10 : 1, cursor: editLayout ? 'grab' : 'pointer' } : {}}
+                style={editLayout && !table.isNumbered ? { position: 'relative', left: table.x || 0, top: table.y || 0, zIndex: isDragging ? 30 : 1, cursor: editLayout ? 'grab' : 'pointer', transition: 'box-shadow 0.2s, transform 0.2s' } : {}}
                 draggable={editLayout && !table.isNumbered}
-                onDragStart={e => handleDragStart(e, table)}
-                onDrag={e => handleDrag(e, table)}
-                onDragEnd={e => handleDragEnd(e, table)}
+                onDragStart={e => { if (editLayout && !table.isNumbered) { handleDragStart(e, table); } }}
+                onDrag={e => { if (editLayout && !table.isNumbered) { handleDrag(e, table); } }}
+                onDragEnd={e => { if (editLayout && !table.isNumbered) { handleDragEnd(e, table); } }}
                 onClick={() => { if (!editLayout) { setSelectedTable(table); setShowOrderModal(true); } }}
               >
                 <MesaBarra
@@ -169,6 +170,7 @@ export default function BarraView() {
                   isOccupied={isOccupied}
                   isServing={isServing}
                   hasOrder={hasOrder}
+                  isDragging={isDragging}
                 />
               </div>
             );
