@@ -296,102 +296,76 @@ export default function BarraView() {
         </button>
       </div>
       {/* Layout de mesas */}
-      {!editLayout ? (
-        <div className="w-full max-w-7xl mx-auto px-4 py-10">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 w-full">
-            {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map(table => {
-              const { isOccupied, isServing } = getMesaStatus(table);
-              const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
-              return (
-                <div
-                  key={table._id}
-                  onClick={() => { setSelectedTable(table); setShowOrderModal(true); }}
-                >
-                  <MesaBarra
-                    numero={table.number}
-                    name={table.name}
-                    isOccupied={isOccupied}
-                    isServing={isServing}
-                    hasOrder={hasOrder}
-                    isDragging={false}
-                  />
-                </div>
-              );
-            })}
+      <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px]" style={{ height: '700px' }}>
+        {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map((table, i) => {
+          const { isOccupied, isServing } = getMesaStatus(table);
+          const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
+          const isDragging = dragInfo && dragInfo.id === table._id;
+          const style = {
+            position: 'absolute',
+            left: table.x,
+            top: table.y,
+            width: CARD_W,
+            height: CARD_H,
+            zIndex: isDragging ? 30 : 1,
+            cursor: editLayout ? 'grab' : 'pointer',
+            transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
+            opacity: isDragging ? 0.85 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          };
+          return (
+            <div
+              key={table._id}
+              style={style}
+              onMouseDown={e => editLayout && handlePointerDown(e, table)}
+              onTouchStart={e => editLayout && handlePointerDown(e, table)}
+              onClick={e => {
+                if (!editLayout) {
+                  setSelectedTable(table);
+                  setShowOrderModal(true);
+                } else {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+            >
+              <MesaBarra
+                numero={table.number}
+                name={table.name}
+                isOccupied={isOccupied}
+                isServing={isServing}
+                hasOrder={hasOrder}
+                isDragging={isDragging}
+              />
+            </div>
+          );
+        })}
+        {/* Botones flotantes solo en modo edición */}
+        {editLayout && (
+          <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50">
+            <button
+              className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-lg shadow hover:bg-green-700 transition-colors"
+              onClick={saveAllPositions}
+            >
+              Guardar posición
+            </button>
+            <button
+              className="px-6 py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors"
+              onClick={resetPositions}
+            >
+              Reiniciar posiciones
+            </button>
           </div>
-        </div>
-      ) : (
-        <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px]" style={{ height: '700px' }}>
-          {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map((table, i) => {
-            const { isOccupied, isServing } = getMesaStatus(table);
-            const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
-            const isDragging = dragInfo && dragInfo.id === table._id;
-            const style = {
-              position: 'absolute',
-              left: table.x,
-              top: table.y,
-              width: CARD_W,
-              height: CARD_H,
-              zIndex: isDragging ? 30 : 1,
-              cursor: editLayout ? 'grab' : 'pointer',
-              transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
-              opacity: isDragging ? 0.85 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            };
-            return (
-              <div
-                key={table._id}
-                style={style}
-                onMouseDown={e => editLayout && handlePointerDown(e, table)}
-                onTouchStart={e => editLayout && handlePointerDown(e, table)}
-                onClick={e => {
-                  if (!editLayout) {
-                    setSelectedTable(table);
-                    setShowOrderModal(true);
-                  } else {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }
-                }}
-              >
-                <MesaBarra
-                  numero={table.number}
-                  name={table.name}
-                  isOccupied={isOccupied}
-                  isServing={isServing}
-                  hasOrder={hasOrder}
-                  isDragging={isDragging}
-                />
-              </div>
-            );
-          })}
-          {/* Botones flotantes solo en modo edición */}
-          {editLayout && (
-            <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50">
-              <button
-                className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-lg shadow hover:bg-green-700 transition-colors"
-                onClick={saveAllPositions}
-              >
-                Guardar posición
-              </button>
-              <button
-                className="px-6 py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors"
-                onClick={resetPositions}
-              >
-                Reiniciar posiciones
-              </button>
-            </div>
-          )}
-          {/* Mensaje de éxito */}
-          {successMessage && (
-            <div className="fixed bottom-24 right-8 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium">
-              {successMessage}
-            </div>
-          )}
-        </div>
-      )}
+        )}
+        {/* Mensaje de éxito */}
+        {successMessage && (
+          <div className="fixed bottom-24 right-8 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium">
+            {successMessage}
+          </div>
+        )}
+      </div>
       {/* Modal de comanda o mesa vacía */}
       {showOrderModal && selectedTable && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
