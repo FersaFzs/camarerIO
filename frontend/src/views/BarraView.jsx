@@ -33,7 +33,7 @@ export default function BarraView() {
         let custom = tables.find(t => !t._id.startsWith('mesa-') && t.number === table.number);
         if (!custom) {
           // Crear en backend
-          const created = await createCustomTable(table.name);
+          const created = await createCustomTableWithNumber(table.name);
           // Asegurar que el número se copia correctamente
           custom = { ...created, isNumbered: false, number: table.number };
           // Reemplazar la mesa numerada por la personalizada
@@ -211,6 +211,16 @@ export default function BarraView() {
     }));
     // eslint-disable-next-line
   }, [tables.length]);
+
+  // Al crear una mesa personalizada, asigna un número único
+  const createCustomTableWithNumber = async (name) => {
+    // Buscar el siguiente número libre
+    const usedNumbers = new Set(tables.map(t => t.number));
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) nextNumber++;
+    const created = await createCustomTable(name);
+    return { ...created, number: nextNumber };
+  };
 
   // Cargar datos y conectar socket
   useEffect(() => {
