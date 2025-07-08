@@ -4,6 +4,7 @@ import { fetchCustomTables, fetchTableStatuses, updateTablePosition } from '../s
 import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import React from 'react';
 
 const SOCKET_URL = 'https://camarerio.onrender.com';
 
@@ -19,7 +20,58 @@ export default function BarraView() {
   const [draggedTableId, setDraggedTableId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [editLayout, setEditLayout] = useState(false);
-  const navigate = useNavigate();
+  const [areaSize, setAreaSize] = useState({ width: 1200, height: 700 });
+  const areaRef = React.useRef(null);
+
+  // Helper para guardar posición de cualquier mesa
+  const saveTablePosition = async (table, x, y) => {
+    try {
+      await updateTablePosition(table._id, x, y);
+      setTables(prev => prev.map(t => t._id === table._id ? { ...t, x, y } : t));
+    } catch (err) {
+      setError('Error al guardar la posición de la mesa');
+    }
+  };
+
+  // Drag & drop manual (no nativo)
+  const [dragInfo, setDragInfo] = useState(null); // { id, offsetX, offsetY }
+
+  const handleMouseDown = (e, table) => {
+    if (!editLayout) return;
+    const rect = areaRef.current.getBoundingClientRect();
+    setDragInfo({
+      id: table._id,
+      offsetX: e.clientX - (table.x || (rect.left + 40)),
+      offsetY: e.clientY - (table.y || (rect.top + 40)),
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!editLayout || !dragInfo) return;
+    const rect = areaRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - dragInfo.offsetX;
+    const y = e.clientY - rect.top - dragInfo.offsetY;
+    setTables(prev => prev.map(t => t._id === dragInfo.id ? { ...t, x, y } : t));
+  };
+
+  const handleMouseUp = async (e) => {
+    if (!editLayout || !dragInfo) return;
+    const table = tables.find(t => t._id === dragInfo.id);
+    if (table) {
+      await saveTablePosition(table, table.x, table.y);
+    }
+    setDragInfo(null);
+  };
+
+  React.useEffect(() => {
+    if (!editLayout) return;
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  });
 
   // Función para cargar mesas, estados y comandas
   const loadData = async () => {
@@ -135,6 +187,8 @@ export default function BarraView() {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-white flex flex-col font-inter">
       {/* Header */}
@@ -147,22 +201,54 @@ export default function BarraView() {
           {editLayout ? 'Desactivar edición de layout' : 'Editar layout'}
         </button>
       </div>
-      {/* Grid de mesas */}
-      <div className="w-full max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 w-full">
+      {/* Layout de mesas */}
+      {!editLayout ? (
+        <div className="w-full max-w-7xl mx-auto px-4 py-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 w-full">
+            {tables.map(table => {
+              const { isOccupied, isServing } = getMesaStatus(table);
+              const hasOrder = orders[table.number] && orders[table.number].length > 0;
+              return (
+                <div
+                  key={table._id}
+                  onClick={() => { setSelectedTable(table); setShowOrderModal(true); }}
+                >
+                  <MesaBarra
+                    numero={table.number}
+                    name={table.name}
+                    isOccupied={isOccupied}
+                    isServing={isServing}
+                    hasOrder={hasOrder}
+                    isDragging={false}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div
+          ref={areaRef}
+          className="relative mx-auto my-10 bg-green-50 border-2 border-green-200 rounded-2xl shadow-lg"
+          style={{ width: areaSize.width, height: areaSize.height, minWidth: 320, minHeight: 400 }}
+        >
           {tables.map(table => {
             const { isOccupied, isServing } = getMesaStatus(table);
             const hasOrder = orders[table.number] && orders[table.number].length > 0;
-            const isDragging = editLayout && draggedTableId === table._id;
+            const isDragging = dragInfo && dragInfo.id === table._id;
             return (
               <div
                 key={table._id}
-                style={editLayout && !table.isNumbered ? { position: 'relative', left: table.x || 0, top: table.y || 0, zIndex: isDragging ? 30 : 1, cursor: editLayout ? 'grab' : 'pointer', transition: 'box-shadow 0.2s, transform 0.2s' } : {}}
-                draggable={editLayout && !table.isNumbered}
-                onDragStart={e => { if (editLayout && !table.isNumbered) { handleDragStart(e, table); } }}
-                onDrag={e => { if (editLayout && !table.isNumbered) { handleDrag(e, table); } }}
-                onDragEnd={e => { if (editLayout && !table.isNumbered) { handleDragEnd(e, table); } }}
-                onClick={() => { if (!editLayout) { setSelectedTable(table); setShowOrderModal(true); } }}
+                style={{
+                  position: 'absolute',
+                  left: table.x || 40,
+                  top: table.y || 40,
+                  zIndex: isDragging ? 30 : 1,
+                  cursor: 'grab',
+                  transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
+                  opacity: isDragging ? 0.85 : 1,
+                }}
+                onMouseDown={e => handleMouseDown(e, table)}
               >
                 <MesaBarra
                   numero={table.number}
@@ -175,8 +261,10 @@ export default function BarraView() {
               </div>
             );
           })}
+          <div className="absolute inset-0 pointer-events-none rounded-2xl border-4 border-dashed border-green-300 animate-pulse" style={{ zIndex: 0 }} />
+          <div className="absolute top-2 left-2 text-green-700 font-semibold bg-white bg-opacity-80 px-4 py-2 rounded-xl shadow-md">Arrastra y suelta para mover cualquier mesa</div>
         </div>
-      </div>
+      )}
       {/* Modal de comanda o mesa vacía */}
       {showOrderModal && selectedTable && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
