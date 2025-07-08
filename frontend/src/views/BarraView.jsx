@@ -187,7 +187,7 @@ export default function BarraView() {
     }
   };
 
-  // Calcula posiciones grid para todas las mesas (5 columnas, tamaño 180x120, margen 32)
+  // Calcula posiciones grid para todas las mesas (5 columnas, tamaño 160x110, margen 32)
   const CARD_W = 160, CARD_H = 110, GAP = 32, COLS = 5;
   function getGridPosition(index) {
     const col = index % COLS;
@@ -201,6 +201,10 @@ export default function BarraView() {
   useEffect(() => {
     if (!tables.length) return;
     setTables(prev => prev.map((t, i) => {
+      if (typeof t.number === 'undefined' || t.number === null) {
+        console.warn('Mesa sin número:', t);
+        return t;
+      }
       if (typeof t.x === 'number' && typeof t.y === 'number') return t;
       const pos = getGridPosition(i);
       return { ...t, x: pos.x, y: pos.y };

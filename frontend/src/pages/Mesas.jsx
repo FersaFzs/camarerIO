@@ -192,6 +192,15 @@ function Mesas() {
     }
   }
 
+  // Filtrar mesas personalizadas sin número y avisar
+  const filteredCustomTables = customTables.filter(t => {
+    if (typeof t.number === 'undefined' || t.number === null) {
+      console.warn('Mesa personalizada sin número:', t);
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className="min-h-screen w-full bg-neutral-50 font-inter flex flex-col items-center justify-start">
       {/* Leyenda minimalista */}
@@ -243,9 +252,9 @@ function Mesas() {
           )
         })}
         {/* Mesas personalizadas (movibles) */}
-        {customTables.map((table) => {
-          const isOccupied = occupiedTables.has(table.number.toString())
-          const isServing = servingTables.has(table.number.toString())
+        {filteredCustomTables.map((table) => {
+          const isOccupied = occupiedTables.has(table.number?.toString?.())
+          const isServing = servingTables.has(table.number?.toString?.())
           return (
             <div
               key={table._id}
