@@ -22,6 +22,7 @@ export default function BarraView() {
   const areaRef = useRef(null);
   const [dragInfo, setDragInfo] = useState(null); // { id, offsetX, offsetY }
   const navigate = useNavigate();
+  const [successMessage, setSuccessMessage] = useState(null);
 
   // Helper para guardar posición de cualquier mesa
   const saveTablePosition = async (table, x, y) => {
@@ -33,14 +34,15 @@ export default function BarraView() {
         if (!custom) {
           // Crear en backend
           const created = await createCustomTable(table.name);
-          custom = { ...created, isNumbered: false };
+          // Asegurar que el número se copia correctamente
+          custom = { ...created, isNumbered: false, number: table.number };
           // Reemplazar la mesa numerada por la personalizada
           setTables(prev => prev.map(t => t._id === table._id ? { ...custom, x, y } : t));
           await updateTablePosition(custom._id, x, y);
           return;
         } else {
           // Ya existe personalizada, usar su _id
-          setTables(prev => prev.map(t => t._id === table._id ? { ...custom, x, y } : t));
+          setTables(prev => prev.map(t => t._id === table._id ? { ...custom, x, y, number: table.number } : t));
           await updateTablePosition(custom._id, x, y);
           return;
         }
@@ -52,7 +54,38 @@ export default function BarraView() {
     }
   };
 
-  // Drag & drop manual (ratón y táctil)
+  // Reiniciar posiciones: borra x/y de todas las mesas en backend y frontend
+  const resetPositions = async () => {
+    try {
+      // Para cada mesa personalizada, poner x/y a null en backend
+      for (const table of tables) {
+        if (table._id && table.x !== undefined) {
+          await updateTablePosition(table._id, null, null);
+        }
+      }
+      // En frontend, quitar x/y de todas
+      setTables(prev => prev.map(t => ({ ...t, x: undefined, y: undefined })));
+    } catch (err) {
+      setError('Error al reiniciar posiciones');
+    }
+  };
+
+  // Guardar todas las posiciones actuales
+  const saveAllPositions = async () => {
+    try {
+      for (const table of tables) {
+        if (table._id && typeof table.x === 'number' && typeof table.y === 'number') {
+          await updateTablePosition(table._id, table.x, table.y);
+        }
+      }
+      setSuccessMessage('Posiciones guardadas');
+      setTimeout(() => setSuccessMessage(null), 2000);
+    } catch (err) {
+      setError('Error al guardar posiciones');
+    }
+  };
+
+  // Drag & drop manual (ratón y táctil) para modo edición
   const getEventCoords = (e) => {
     if (e.touches && e.touches.length > 0) {
       return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -67,8 +100,8 @@ export default function BarraView() {
     const { x, y } = getEventCoords(e);
     setDragInfo({
       id: table._id,
-      offsetX: x - (table.x || (rect.left + 40)),
-      offsetY: y - (table.y || (rect.top + 40)),
+      offsetX: x - (table.x !== undefined ? table.x : 0) - rect.left,
+      offsetY: y - (table.y !== undefined ? table.y : 0) - rect.top,
     });
   };
 
@@ -83,10 +116,6 @@ export default function BarraView() {
 
   const handlePointerUp = async (e) => {
     if (!editLayout || !dragInfo) return;
-    const table = tables.find(t => t._id === dragInfo.id);
-    if (table) {
-      await saveTablePosition(table, table.x, table.y);
-    }
     setDragInfo(null);
   };
 
@@ -235,9 +264,9 @@ export default function BarraView() {
       {!editLayout ? (
         <div className="w-full max-w-7xl mx-auto px-4 py-10">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 w-full">
-            {tables.map(table => {
+            {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map(table => {
               const { isOccupied, isServing } = getMesaStatus(table);
-              const hasOrder = orders[table.number] && orders[table.number].length > 0;
+              const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
               return (
                 <div
                   key={table._id}
@@ -257,43 +286,64 @@ export default function BarraView() {
           </div>
         </div>
       ) : (
-        <div
-          ref={areaRef}
-          className="relative mx-auto my-10 bg-green-50 border-2 border-green-200 rounded-2xl shadow-lg"
-          style={{ width: areaSize.width, height: areaSize.height, minWidth: 320, minHeight: 400 }}
-        >
-          {tables.map(table => {
-            const { isOccupied, isServing } = getMesaStatus(table);
-            const hasOrder = orders[table.number] && orders[table.number].length > 0;
-            const isDragging = dragInfo && dragInfo.id === table._id;
-            return (
-              <div
-                key={table._id}
-                style={{
-                  position: 'absolute',
-                  left: table.x || 40,
-                  top: table.y || 40,
-                  zIndex: isDragging ? 30 : 1,
-                  cursor: 'grab',
-                  transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
-                  opacity: isDragging ? 0.85 : 1,
-                }}
-                onMouseDown={e => handlePointerDown(e, table)}
-                onTouchStart={e => handlePointerDown(e, table)}
+        <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px]">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 w-full">
+            {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map(table => {
+              const { isOccupied, isServing } = getMesaStatus(table);
+              const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
+              const isDragging = dragInfo && dragInfo.id === table._id;
+              // Si tiene x/y, usar posición absoluta
+              const style = (typeof table.x === 'number' && typeof table.y === 'number') ? {
+                position: 'absolute',
+                left: table.x,
+                top: table.y,
+                zIndex: isDragging ? 30 : 1,
+                cursor: editLayout ? 'grab' : 'pointer',
+                transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
+                opacity: isDragging ? 0.85 : 1,
+              } : {};
+              return (
+                <div
+                  key={table._id}
+                  style={style}
+                  onMouseDown={e => editLayout && handlePointerDown(e, table)}
+                  onTouchStart={e => editLayout && handlePointerDown(e, table)}
+                >
+                  <MesaBarra
+                    numero={table.number}
+                    name={table.name}
+                    isOccupied={isOccupied}
+                    isServing={isServing}
+                    hasOrder={hasOrder}
+                    isDragging={isDragging}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          {/* Botones flotantes solo en modo edición */}
+          {editLayout && (
+            <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50">
+              <button
+                className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-lg shadow hover:bg-green-700 transition-colors"
+                onClick={saveAllPositions}
               >
-                <MesaBarra
-                  numero={table.number}
-                  name={table.name}
-                  isOccupied={isOccupied}
-                  isServing={isServing}
-                  hasOrder={hasOrder}
-                  isDragging={isDragging}
-                />
-              </div>
-            );
-          })}
-          <div className="absolute inset-0 pointer-events-none rounded-2xl border-4 border-dashed border-green-300 animate-pulse" style={{ zIndex: 0 }} />
-          <div className="absolute top-2 left-2 text-green-700 font-semibold bg-white bg-opacity-80 px-4 py-2 rounded-xl shadow-md">Arrastra y suelta para mover cualquier mesa</div>
+                Guardar posición
+              </button>
+              <button
+                className="px-6 py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors"
+                onClick={resetPositions}
+              >
+                Reiniciar posiciones
+              </button>
+            </div>
+          )}
+          {/* Mensaje de éxito */}
+          {successMessage && (
+            <div className="fixed bottom-24 right-8 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium">
+              {successMessage}
+            </div>
+          )}
         </div>
       )}
       {/* Modal de comanda o mesa vacía */}
@@ -309,10 +359,10 @@ export default function BarraView() {
             <h2 className="text-2xl font-extrabold mb-6 text-green-900 text-center tracking-tight">
               Mesa {selectedTable.name || selectedTable.number}
             </h2>
-            {orders[selectedTable.number] && orders[selectedTable.number].length > 0 ? (
+            {orders[selectedTable.number?.toString?.()] && orders[selectedTable.number?.toString?.()].length > 0 ? (
               <>
                 <div className="space-y-3 mb-6">
-                  {orders[selectedTable.number].map((order, idx) => (
+                  {orders[selectedTable.number?.toString?.()].map((order, idx) => (
                     <div key={idx} className="flex items-center justify-between bg-green-50 rounded-lg p-3 text-lg font-semibold text-green-900 shadow-sm">
                       <span>{order.name}</span>
                       <span className="font-bold">x{order.qty}</span>
