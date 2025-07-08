@@ -187,6 +187,27 @@ export default function BarraView() {
     }
   };
 
+  // Calcula posiciones grid para todas las mesas (5 columnas, tamaño 180x120, margen 32)
+  const CARD_W = 160, CARD_H = 110, GAP = 32, COLS = 5;
+  function getGridPosition(index) {
+    const col = index % COLS;
+    const row = Math.floor(index / COLS);
+    return {
+      x: col * (CARD_W + GAP),
+      y: row * (CARD_H + GAP),
+    };
+  }
+  // Al cargar mesas, asignar x/y si no tienen
+  useEffect(() => {
+    if (!tables.length) return;
+    setTables(prev => prev.map((t, i) => {
+      if (typeof t.x === 'number' && typeof t.y === 'number') return t;
+      const pos = getGridPosition(i);
+      return { ...t, x: pos.x, y: pos.y };
+    }));
+    // eslint-disable-next-line
+  }, [tables.length]);
+
   // Cargar datos y conectar socket
   useEffect(() => {
     loadData();
@@ -286,41 +307,52 @@ export default function BarraView() {
           </div>
         </div>
       ) : (
-        <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px]">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 w-full">
-            {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map(table => {
-              const { isOccupied, isServing } = getMesaStatus(table);
-              const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
-              const isDragging = dragInfo && dragInfo.id === table._id;
-              // Si tiene x/y, usar posición absoluta
-              const style = (typeof table.x === 'number' && typeof table.y === 'number') ? {
-                position: 'absolute',
-                left: table.x,
-                top: table.y,
-                zIndex: isDragging ? 30 : 1,
-                cursor: editLayout ? 'grab' : 'pointer',
-                transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
-                opacity: isDragging ? 0.85 : 1,
-              } : {};
-              return (
-                <div
-                  key={table._id}
-                  style={style}
-                  onMouseDown={e => editLayout && handlePointerDown(e, table)}
-                  onTouchStart={e => editLayout && handlePointerDown(e, table)}
-                >
-                  <MesaBarra
-                    numero={table.number}
-                    name={table.name}
-                    isOccupied={isOccupied}
-                    isServing={isServing}
-                    hasOrder={hasOrder}
-                    isDragging={isDragging}
-                  />
-                </div>
-              );
-            })}
-          </div>
+        <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px]" style={{ height: '700px' }}>
+          {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map((table, i) => {
+            const { isOccupied, isServing } = getMesaStatus(table);
+            const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
+            const isDragging = dragInfo && dragInfo.id === table._id;
+            const style = {
+              position: 'absolute',
+              left: table.x,
+              top: table.y,
+              width: CARD_W,
+              height: CARD_H,
+              zIndex: isDragging ? 30 : 1,
+              cursor: editLayout ? 'grab' : 'pointer',
+              transition: isDragging ? 'none' : 'box-shadow 0.2s, transform 0.2s',
+              opacity: isDragging ? 0.85 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            };
+            return (
+              <div
+                key={table._id}
+                style={style}
+                onMouseDown={e => editLayout && handlePointerDown(e, table)}
+                onTouchStart={e => editLayout && handlePointerDown(e, table)}
+                onClick={e => {
+                  if (!editLayout) {
+                    setSelectedTable(table);
+                    setShowOrderModal(true);
+                  } else {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+              >
+                <MesaBarra
+                  numero={table.number}
+                  name={table.name}
+                  isOccupied={isOccupied}
+                  isServing={isServing}
+                  hasOrder={hasOrder}
+                  isDragging={isDragging}
+                />
+              </div>
+            );
+          })}
           {/* Botones flotantes solo en modo edición */}
           {editLayout && (
             <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50">
