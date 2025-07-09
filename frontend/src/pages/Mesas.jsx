@@ -65,7 +65,8 @@ function Mesas() {
     const loadCustomTables = async () => {
       try {
         const tables = await fetchCustomTables()
-        setCustomTables(tables)
+        // Filtrar mesas sin número
+        setCustomTables(tables.filter(t => typeof t.number === 'number' && t.number !== null))
       } catch (err) {
         console.error('Error al cargar mesas personalizadas:', err)
       }
@@ -122,11 +123,16 @@ function Mesas() {
       setError(null)
       // Buscar el siguiente número libre
       const usedNumbers = new Set([
-        ...customTables.map(t => t.number),
+        ...customTables.filter(t => typeof t.number === 'number' && t.number !== null).map(t => t.number),
         ...Array(10).fill(0).map((_, i) => i + 1) // Reservar 1-10
       ]);
       let nextNumber = 11;
       while (usedNumbers.has(nextNumber)) nextNumber++;
+      if (!nextNumber || typeof nextNumber !== 'number') {
+        setError('No se pudo asignar un número único a la mesa.');
+        setIsCreatingTable(false);
+        return;
+      }
       const newTable = await createCustomTable({ name: customTableName, number: nextNumber });
       setShowCustomTableModal(false)
       setCustomTableName('')

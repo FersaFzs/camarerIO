@@ -132,6 +132,8 @@ export default function BarraView() {
     setError(null);
     try {
       let customTables = await fetchCustomTables();
+      // Filtrar mesas sin número
+      customTables = customTables.filter(t => typeof t.number === 'number' && t.number !== null);
       // Asegurar que existen las mesas 1-10 como reales y con número
       const existingNumbers = new Set(customTables.map(t => t.number));
       for (let i = 1; i <= 10; i++) {
@@ -141,7 +143,7 @@ export default function BarraView() {
           customTables.push({ ...nueva, number: i, name: `Mesa ${i}` });
         }
       }
-      // Filtrar solo mesas con número válido
+      // Filtrar solo mesas con número válido (de nuevo por si el backend devuelve mal)
       customTables = customTables.filter(t => typeof t.number === 'number' && t.number !== null);
       // Ordenar por número
       customTables = customTables.sort((a, b) => a.number - b.number);
