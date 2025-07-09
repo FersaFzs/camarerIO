@@ -4,7 +4,7 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node scripts/limpiarMesasCorruptas.js && node src/index.js",
+    "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "limpiar-mesas-corruptas": "node scripts/limpiarMesasCorruptas.js"
   },
