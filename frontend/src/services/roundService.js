@@ -215,7 +215,7 @@ export const deleteProduct = async (productId) => {
   }
 };
 
-export const createCustomTable = async (tableName) => {
+export const createCustomTable = async ({ name, number }) => {
   try {
     const response = await fetch(`${API_URL}/tables/custom`, {
       method: 'POST',
@@ -223,7 +223,7 @@ export const createCustomTable = async (tableName) => {
         'Content-Type': 'application/json',
         ...authHeader()
       },
-      body: JSON.stringify({ name: tableName })
+      body: JSON.stringify({ name, number })
     });
     if (!response.ok) {
       let errorMsg = 'Error al crear la mesa personalizada';
