@@ -7,7 +7,7 @@ export const createCustomTable = async (req, res) => {
     if (!name || !name.trim()) {
       return res.status(400).json({ message: 'El nombre de la mesa es obligatorio' });
     }
-    if (typeof number !== 'number' || isNaN(number) || number === null) {
+    if (number === null || number === undefined || typeof number !== 'number' || isNaN(number)) {
       return res.status(400).json({ message: 'El número de mesa es obligatorio y debe ser un número válido.' });
     }
     // Comprobar si ya existe una mesa con ese nombre
