@@ -27,26 +27,13 @@ export default function BarraView() {
   // Helper para guardar posición de cualquier mesa
   const saveTablePosition = async (table, x, y) => {
     try {
-      // Si la mesa es numerada y no tiene _id real, crearla como personalizada
+      // Si la mesa es numerada y no tiene _id real, NO guardar en backend
       if (table._id.startsWith('mesa-')) {
-        // Buscar si ya existe una personalizada con ese número
-        let custom = tables.find(t => !t._id.startsWith('mesa-') && t.number === table.number);
-        if (!custom) {
-          // Crear en backend
-          const created = await createCustomTableWithNumber(table.name);
-          // Asegurar que el número se copia correctamente
-          custom = { ...created, isNumbered: false, number: table.number };
-          // Reemplazar la mesa numerada por la personalizada
-          setTables(prev => prev.map(t => t._id === table._id ? { ...custom, x, y } : t));
-          await updateTablePosition(custom._id, x, y);
-          return;
-        } else {
-          // Ya existe personalizada, usar su _id
-          setTables(prev => prev.map(t => t._id === table._id ? { ...custom, x, y, number: table.number } : t));
-          await updateTablePosition(custom._id, x, y);
-          return;
-        }
+        // Solo actualizar en frontend
+        setTables(prev => prev.map(t => t._id === table._id ? { ...t, x, y } : t));
+        return;
       }
+      // Para mesas personalizadas, guardar en backend
       await updateTablePosition(table._id, x, y);
       setTables(prev => prev.map(t => t._id === table._id ? { ...t, x, y } : t));
     } catch (err) {
@@ -59,7 +46,7 @@ export default function BarraView() {
     try {
       // Para cada mesa personalizada, poner x/y a null en backend
       for (const table of tables) {
-        if (table._id && table.x !== undefined) {
+        if (table._id && table.x !== undefined && !table._id.startsWith('mesa-')) {
           await updateTablePosition(table._id, null, null);
         }
       }
@@ -74,7 +61,12 @@ export default function BarraView() {
   const saveAllPositions = async () => {
     try {
       for (const table of tables) {
-        if (table._id && typeof table.x === 'number' && typeof table.y === 'number') {
+        if (
+          table._id &&
+          typeof table.x === 'number' &&
+          typeof table.y === 'number' &&
+          !table._id.startsWith('mesa-')
+        ) {
           await updateTablePosition(table._id, table.x, table.y);
         }
       }
