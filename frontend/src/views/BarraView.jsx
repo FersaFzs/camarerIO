@@ -139,6 +139,10 @@ export default function BarraView() {
       for (let i = 1; i <= 10; i++) {
         if (!existingNumbers.has(i)) {
           // Crear mesa personalizada si falta, con número y nombre
+          if (typeof i !== 'number' || isNaN(i) || i === null) {
+            console.error('Intento de crear mesa numerada con número inválido:', i);
+            continue;
+          }
           const nueva = await createCustomTable({ name: `Mesa ${i}`, number: i });
           customTables.push({ ...nueva, number: i, name: `Mesa ${i}` });
         }
@@ -228,6 +232,10 @@ export default function BarraView() {
     const usedNumbers = new Set(tables.map(t => t.number));
     let nextNumber = 1;
     while (usedNumbers.has(nextNumber)) nextNumber++;
+    if (typeof nextNumber !== 'number' || isNaN(nextNumber) || nextNumber === null) {
+      console.error('Intento de crear mesa personalizada con número inválido:', nextNumber);
+      throw new Error('No se pudo asignar un número único a la mesa personalizada.');
+    }
     const created = await createCustomTable({ name, number: nextNumber });
     return { ...created, number: nextNumber };
   };
