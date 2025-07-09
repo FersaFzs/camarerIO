@@ -3,9 +3,12 @@ import Table from '../models/Table.js'
 // Crear una nueva mesa personalizada
 export const createCustomTable = async (req, res) => {
   try {
-    const { name } = req.body
+    const { name, number } = req.body;
     if (!name || !name.trim()) {
-      return res.status(400).json({ message: 'El nombre de la mesa es obligatorio' })
+      return res.status(400).json({ message: 'El nombre de la mesa es obligatorio' });
+    }
+    if (typeof number !== 'number' || isNaN(number) || number === null) {
+      return res.status(400).json({ message: 'El número de mesa es obligatorio y debe ser un número válido.' });
     }
     // Comprobar si ya existe una mesa con ese nombre
     const existing = await Table.findOne({ name: name.trim() })
@@ -17,7 +20,7 @@ export const createCustomTable = async (req, res) => {
     // El número más alto de las mesas numeradas (1-10)
     const maxNumber = Math.max(10, maxCustom ? maxCustom.number : 10)
     const nextNumber = maxNumber + 1
-    const table = new Table({ name: name.trim(), number: nextNumber })
+    const table = new Table({ name: name.trim(), number })
     await table.save()
     // Emitir evento para que todos los clientes recarguen mesas
     req.io.emit('tables:update')
