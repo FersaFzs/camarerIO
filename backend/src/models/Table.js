@@ -6,6 +6,11 @@ const tableSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  number: {
+    type: Number,
+    required: true,
+    unique: true
+  },
   x: {
     type: Number,
     default: 0
