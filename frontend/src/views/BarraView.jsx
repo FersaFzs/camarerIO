@@ -132,17 +132,34 @@ export default function BarraView() {
     setError(null);
     try {
       let customTables = await fetchCustomTables();
-      // Asegurar que existen las mesas 1-10 como reales
+      // Asegurar que existen las mesas 1-10 como reales y con número
       const existingNumbers = new Set(customTables.map(t => t.number));
       for (let i = 1; i <= 10; i++) {
         if (!existingNumbers.has(i)) {
-          // Crear mesa personalizada si falta
-          const nueva = await createCustomTable(`Mesa ${i}`);
+          // Crear mesa personalizada si falta, con número y nombre
+          const nueva = await createCustomTable({ name: `Mesa ${i}`, number: i });
           customTables.push({ ...nueva, number: i, name: `Mesa ${i}` });
         }
       }
+      // Filtrar solo mesas con número válido
+      customTables = customTables.filter(t => typeof t.number === 'number' && t.number !== null);
       // Ordenar por número
       customTables = customTables.sort((a, b) => a.number - b.number);
+      // Asignar posición por defecto si no tienen (solo para barra)
+      const CARD_W = 200, CARD_H = 140, GAP = 32, COLS = 5;
+      function getGridPosition(index) {
+        const col = index % COLS;
+        const row = Math.floor(index / COLS);
+        return {
+          x: col * (CARD_W + GAP),
+          y: row * (CARD_H + GAP),
+        };
+      }
+      customTables = customTables.map((t, i) => {
+        if (typeof t.x === 'number' && typeof t.y === 'number') return t;
+        const pos = getGridPosition(i);
+        return { ...t, x: pos.x, y: pos.y };
+      });
       setTables(customTables);
       // Estados de mesas
       const statuses = await fetchTableStatuses();
