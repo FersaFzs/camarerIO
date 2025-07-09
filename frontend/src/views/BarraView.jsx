@@ -140,16 +140,25 @@ export default function BarraView() {
     setError(null);
     try {
       let customTables = await fetchCustomTables();
+      // Asignar número único a cualquier mesa personalizada sin número
+      const usedNumbers = new Set();
+      customTables.forEach(t => { if (typeof t.number === 'number') usedNumbers.add(t.number); });
+      let nextNumber = 11;
+      customTables = customTables.map((t) => {
+        if (typeof t.number !== 'number' || t.number === null) {
+          // Buscar el siguiente número libre
+          while (usedNumbers.has(nextNumber)) nextNumber++;
+          usedNumbers.add(nextNumber);
+          return { ...t, number: nextNumber, isNumbered: false };
+        }
+        return { ...t, isNumbered: false };
+      });
       // Generar mesas numeradas (1-10)
       const numberedTables = Array.from({ length: 10 }, (_, i) => ({
         _id: `mesa-${i + 1}`,
         number: i + 1,
         name: `Mesa ${i + 1}`,
         isNumbered: true
-      }));
-      customTables = customTables.map((t) => ({
-        ...t,
-        isNumbered: false
       }));
       const allTables = [...numberedTables, ...customTables];
       setTables(allTables);
@@ -187,8 +196,8 @@ export default function BarraView() {
     }
   };
 
-  // Calcula posiciones grid para todas las mesas (5 columnas, tamaño 160x110, margen 32)
-  const CARD_W = 160, CARD_H = 110, GAP = 32, COLS = 5;
+  // Calcula posiciones grid para todas las mesas (5 columnas, tamaño 200x140, margen 32)
+  const CARD_W = 200, CARD_H = 140, GAP = 32, COLS = 5;
   function getGridPosition(index) {
     const col = index % COLS;
     const row = Math.floor(index / COLS);
