@@ -120,7 +120,14 @@ function Mesas() {
     try {
       setIsCreatingTable(true)
       setError(null)
-      const newTable = await createCustomTable(customTableName)
+      // Buscar el siguiente número libre
+      const usedNumbers = new Set([
+        ...customTables.map(t => t.number),
+        ...Array(10).fill(0).map((_, i) => i + 1) // Reservar 1-10
+      ]);
+      let nextNumber = 11;
+      while (usedNumbers.has(nextNumber)) nextNumber++;
+      const newTable = await createCustomTable({ name: customTableName, number: nextNumber });
       setShowCustomTableModal(false)
       setCustomTableName('')
       setSuccessMessage('Mesa creada correctamente')
@@ -129,7 +136,6 @@ function Mesas() {
       const statuses = await fetchTableStatuses()
       const occupiedSet = new Set()
       const servingSet = new Set()
-      
       statuses.forEach(status => {
         if (status.status === 'occupied') {
           occupiedSet.add(status.tableNumber.toString())
@@ -137,7 +143,6 @@ function Mesas() {
           servingSet.add(status.tableNumber.toString())
         }
       })
-      
       setOccupiedTables(occupiedSet)
       setServingTables(servingSet)
     } catch (err) {

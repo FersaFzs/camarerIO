@@ -226,7 +226,7 @@ export default function BarraView() {
     const usedNumbers = new Set(tables.map(t => t.number));
     let nextNumber = 1;
     while (usedNumbers.has(nextNumber)) nextNumber++;
-    const created = await createCustomTable(name);
+    const created = await createCustomTable({ name, number: nextNumber });
     return { ...created, number: nextNumber };
   };
 
