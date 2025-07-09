@@ -141,7 +141,12 @@ export default function BarraView() {
           // Buscar el siguiente número libre
           while (usedNumbers.has(nextNumber)) nextNumber++;
           usedNumbers.add(nextNumber);
-          return { ...t, number: nextNumber, isNumbered: false };
+          // Si el nombre es 'Mesa X', actualiza el nombre al nuevo número
+          let newName = t.name;
+          if (/^Mesa \d+$/.test(t.name)) {
+            newName = `Mesa ${nextNumber}`;
+          }
+          return { ...t, number: nextNumber, isNumbered: false, name: newName };
         }
         return { ...t, isNumbered: false };
       });
