@@ -94,7 +94,6 @@ export default function BarraView() {
       id: table._id,
       offsetX: x - (table.x !== undefined ? table.x : 0) - rect.left,
       offsetY: y - (table.y !== undefined ? table.y : 0) - rect.top,
-      tableNumber: table.number // Usar siempre el número como identificador de posición
     });
   };
 
@@ -104,13 +103,13 @@ export default function BarraView() {
     const { x, y } = getEventCoords(e);
     const newX = x - rect.left - dragInfo.offsetX;
     const newY = y - rect.top - dragInfo.offsetY;
-    setTables(prev => prev.map(t => t.number === dragInfo.tableNumber ? { ...t, x: newX, y: newY } : t));
+    setTables(prev => prev.map(t => t._id === dragInfo.id ? { ...t, x: newX, y: newY } : t));
   };
 
   const handlePointerUp = async (e) => {
     if (!editLayout || !dragInfo) return;
-    // Al soltar, guardar la posición usando el número como identificador
-    const table = tables.find(t => t.number === dragInfo.tableNumber);
+    // Al soltar, guardar la posición de la mesa (sea numerada o personalizada)
+    const table = tables.find(t => t._id === dragInfo.id);
     if (table) {
       await saveTablePosition(table, table.x, table.y);
     }
@@ -312,7 +311,7 @@ export default function BarraView() {
         {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map((table, i) => {
           const { isOccupied, isServing } = getMesaStatus(table);
           const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
-          const isDragging = dragInfo && dragInfo.tableNumber === table.number;
+          const isDragging = dragInfo && dragInfo.id === table._id;
           const style = {
             position: 'absolute',
             left: table.x,
