@@ -132,28 +132,18 @@ export default function BarraView() {
     setError(null);
     try {
       let customTables = await fetchCustomTables();
-      // Asignar número único a cualquier mesa personalizada sin número
-      const usedNumbers = new Set();
-      customTables.forEach(t => { if (typeof t.number === 'number') usedNumbers.add(t.number); });
-      let nextNumber = 11;
-      customTables = customTables.map((t) => {
-        if (typeof t.number !== 'number' || t.number === null) {
-          // Buscar el siguiente número libre
-          while (usedNumbers.has(nextNumber)) nextNumber++;
-          usedNumbers.add(nextNumber);
-          return { ...t, number: nextNumber, isNumbered: false };
+      // Asegurar que existen las mesas 1-10 como reales
+      const existingNumbers = new Set(customTables.map(t => t.number));
+      for (let i = 1; i <= 10; i++) {
+        if (!existingNumbers.has(i)) {
+          // Crear mesa personalizada si falta
+          const nueva = await createCustomTable(`Mesa ${i}`);
+          customTables.push({ ...nueva, number: i, name: `Mesa ${i}` });
         }
-        return { ...t, isNumbered: false };
-      });
-      // Generar mesas numeradas (1-10)
-      const numberedTables = Array.from({ length: 10 }, (_, i) => ({
-        _id: `mesa-${i + 1}`,
-        number: i + 1,
-        name: `Mesa ${i + 1}`,
-        isNumbered: true
-      }));
-      const allTables = [...numberedTables, ...customTables];
-      setTables(allTables);
+      }
+      // Ordenar por número
+      customTables = customTables.sort((a, b) => a.number - b.number);
+      setTables(customTables);
       // Estados de mesas
       const statuses = await fetchTableStatuses();
       const occupiedSet = new Set();
