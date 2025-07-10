@@ -6,6 +6,7 @@ import { createUser } from '../../services/authService'
 // const mockUsers = [ ... ]
 
 function Settings() {
+  // --- Estado para gestión de usuarios (igual que antes) ---
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -15,9 +16,13 @@ function Settings() {
   const [form, setForm] = useState({ username: '', email: '', password: '', role: 'user', name: '' })
   const [success, setSuccess] = useState(null)
 
+  // --- Estado para configuración de la app ---
+  const [loadingDaily, setLoadingDaily] = useState(false);
+  const [loadingTotal, setLoadingTotal] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [errorApp, setErrorApp] = useState(null);
+
   useEffect(() => {
-    // Aquí iría la llamada real a la API para obtener usuarios
-    // setUsers(mockUsers)
     fetchUsers()
   }, [])
 
@@ -84,154 +89,236 @@ function Settings() {
     }
   }
 
+  // --- Funciones para configuración de la app ---
+  const handleResetDaily = async () => {
+    if (!window.confirm('¿Estás seguro de que quieres poner las cuentas a 0? Esta acción no se puede deshacer.')) return;
+    setLoadingDaily(true);
+    setMessage(null);
+    setErrorApp(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://camarerio.onrender.com/api/accounting/reset-daily', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Error al poner cuentas a 0');
+      setMessage('Cuentas puestas a 0 correctamente.');
+    } catch (err) {
+      setErrorApp('Error al poner cuentas a 0');
+    } finally {
+      setLoadingDaily(false);
+    }
+  };
+
+  const handleResetTotal = async () => {
+    if (!window.confirm('¿Estás seguro de que quieres restaurar todo? Esta acción eliminará TODOS los productos, tickets y rondas. No se puede deshacer.')) return;
+    setLoadingTotal(true);
+    setMessage(null);
+    setErrorApp(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://camarerio.onrender.com/api/accounting/reset-total', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Error al restaurar todo');
+      setMessage('Restauración total realizada correctamente.');
+    } catch (err) {
+      setErrorApp('Error al restaurar todo');
+    } finally {
+      setLoadingTotal(false);
+    }
+  };
+
+  // --- Render ---
   return (
     <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-md p-8 mt-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-green-900">Gestión de Usuarios</h1>
-        <button
-          onClick={handleOpenCreate}
-          className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-semibold shadow-sm"
-        >
-          Nuevo Usuario
-        </button>
-      </div>
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6 shadow-sm">
-          <p className="font-medium">{error}</p>
+      {/* Sección Gestión de Usuarios */}
+      <div className="mb-12">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-green-900">Gestión de Usuarios</h1>
+          <button
+            onClick={handleOpenCreate}
+            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-semibold shadow-sm"
+          >
+            Nuevo Usuario
+          </button>
         </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded mb-6 shadow-sm">
-          <p className="font-medium">{success}</p>
-        </div>
-      )}
-      {loading ? (
-        <div className="text-center text-green-300 py-12">Cargando usuarios...</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-green-50 text-green-900">
-                <th className="py-3 px-4 text-left font-semibold">Usuario</th>
-                <th className="py-3 px-4 text-left font-semibold">Nombre</th>
-                <th className="py-3 px-4 text-left font-semibold">Email</th>
-                <th className="py-3 px-4 text-left font-semibold">Rol</th>
-                <th className="py-3 px-4 text-center font-semibold">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(user => (
-                <tr key={user._id} className="border-b border-green-50 hover:bg-green-50">
-                  <td className="py-2 px-4">{user.username}</td>
-                  <td className="py-2 px-4">{user.name}</td>
-                  <td className="py-2 px-4">{user.email}</td>
-                  <td className="py-2 px-4 capitalize">{user.role}</td>
-                  <td className="py-2 px-4 text-center">
-                    <button
-                      onClick={() => handleOpenEdit(user)}
-                      className="text-green-700 hover:text-green-900 font-semibold px-3 py-1 rounded-lg transition-colors"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user._id)}
-                      className="text-red-600 hover:text-red-700 font-semibold px-3 py-1 rounded-lg transition-colors ml-2"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6 shadow-sm">
+            <p className="font-medium">{error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded mb-6 shadow-sm">
+            <p className="font-medium">{success}</p>
+          </div>
+        )}
+        {loading ? (
+          <div className="text-center text-green-300 py-12">Cargando usuarios...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-green-50 text-green-900">
+                  <th className="py-3 px-4 text-left font-semibold">Usuario</th>
+                  <th className="py-3 px-4 text-left font-semibold">Nombre</th>
+                  <th className="py-3 px-4 text-left font-semibold">Email</th>
+                  <th className="py-3 px-4 text-left font-semibold">Rol</th>
+                  <th className="py-3 px-4 text-center font-semibold">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {/* Modal de edición/creación */}
-      {(showEditModal || showCreateModal) && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
-            <h2 className="text-2xl font-bold text-green-900 mb-6">
-              {showEditModal ? 'Editar Usuario' : 'Nuevo Usuario'}
-            </h2>
-            <form className="space-y-6" onSubmit={e => { e.preventDefault(); handleSave(); }}>
-              <div>
-                <label className="block text-green-900 font-medium mb-1">Usuario</label>
-                <input
-                  type="text"
-                  name="username"
-                  value={form.username}
-                  onChange={handleChange}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-green-900 font-medium mb-1">Nombre</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-green-900 font-medium mb-1">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-green-900 font-medium mb-1">Contraseña {showEditModal && <span className="text-green-400">(dejar en blanco para no cambiar)</span>}</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
-                  placeholder={showEditModal ? 'Nueva contraseña' : 'Contraseña'}
-                  autoComplete="new-password"
-                  {...(showCreateModal ? { required: true } : {})}
-                />
-              </div>
-              <div>
-                <label className="block text-green-900 font-medium mb-1">Rol</label>
-                <select
-                  name="role"
-                  value={form.role}
-                  onChange={handleChange}
-                  className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
-                  required
-                >
-                  <option value="user">Usuario</option>
-                  <option value="admin">Administrador</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 text-green-700 hover:text-green-900 font-semibold"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold shadow-sm"
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
+              </thead>
+              <tbody>
+                {users.map(user => (
+                  <tr key={user._id} className="border-b border-green-50 hover:bg-green-50">
+                    <td className="py-2 px-4">{user.username}</td>
+                    <td className="py-2 px-4">{user.name}</td>
+                    <td className="py-2 px-4">{user.email}</td>
+                    <td className="py-2 px-4 capitalize">{user.role}</td>
+                    <td className="py-2 px-4 text-center">
+                      <button
+                        onClick={() => handleOpenEdit(user)}
+                        className="text-green-700 hover:text-green-900 font-semibold px-3 py-1 rounded-lg transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user._id)}
+                        className="text-red-600 hover:text-red-700 font-semibold px-3 py-1 rounded-lg transition-colors ml-2"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* Modal de edición/creación */}
+        {(showEditModal || showCreateModal) && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+              <h2 className="text-2xl font-bold text-green-900 mb-6">
+                {showEditModal ? 'Editar Usuario' : 'Nuevo Usuario'}
+              </h2>
+              <form className="space-y-6" onSubmit={e => { e.preventDefault(); handleSave(); }}>
+                <div>
+                  <label className="block text-green-900 font-medium mb-1">Usuario</label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={form.username}
+                    onChange={handleChange}
+                    className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-green-900 font-medium mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-green-900 font-medium mb-1">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-green-900 font-medium mb-1">Contraseña {showEditModal && <span className="text-green-400">(dejar en blanco para no cambiar)</span>}</label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
+                    placeholder={showEditModal ? 'Nueva contraseña' : 'Contraseña'}
+                    autoComplete="new-password"
+                    {...(showCreateModal ? { required: true } : {})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-green-900 font-medium mb-1">Rol</label>
+                  <select
+                    name="role"
+                    value={form.role}
+                    onChange={handleChange}
+                    className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50"
+                  >
+                    <option value="user">Camarero</option>
+                    <option value="barra">Barra</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="bg-neutral-200 hover:bg-neutral-300 text-green-900 px-4 py-2 rounded-lg font-semibold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold shadow-sm"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* Sección Configuración de la app */}
+      <div className="mt-12 pt-8 border-t border-green-100">
+        <h2 className="text-xl font-bold text-green-900 mb-6">Configuración de la app</h2>
+        {message && <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded mb-6 shadow-sm">{message}</div>}
+        {errorApp && <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6 shadow-sm">{errorApp}</div>}
+        <div className="flex flex-col gap-6">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm">
+            <h3 className="text-lg font-bold text-red-700 mb-2">Poner cuentas a 0</h3>
+            <p className="text-red-700 mb-3">Esta acción pone a cero las cuentas del día. No afecta a productos ni tickets históricos.</p>
+            <button
+              onClick={handleResetDaily}
+              disabled={loadingDaily || loadingTotal}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg font-semibold"
+            >
+              {loadingDaily ? 'Procesando...' : 'Poner cuentas a 0'}
+            </button>
+          </div>
+          <div className="bg-red-100 border-l-4 border-red-900 p-4 rounded shadow-sm">
+            <h3 className="text-lg font-bold text-red-900 mb-2">Resetear app (restaurar todo)</h3>
+            <p className="text-red-900 mb-3">Esta acción elimina <b>TODOS</b> los productos, tickets y rondas. La app volverá a estado inicial. <b>¡No se puede deshacer!</b></p>
+            <button
+              onClick={handleResetTotal}
+              disabled={loadingDaily || loadingTotal}
+              className="bg-red-900 hover:bg-red-800 text-white px-6 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg font-semibold"
+            >
+              {loadingTotal ? 'Procesando...' : 'Resetear app'}
+            </button>
           </div>
         </div>
-      )}
+        <p className="text-gray-500 text-sm mt-8 text-center">Estas acciones son irreversibles. Úsalas con precaución.</p>
+      </div>
     </div>
   )
 }
