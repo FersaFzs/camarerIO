@@ -72,4 +72,24 @@ export const updateTablePosition = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-} 
+}
+
+// Actualizar una mesa por su ID
+export const updateCustomTable = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, number } = req.body;
+    const updated = await Table.findByIdAndUpdate(
+      id,
+      { name, number },
+      { new: true, runValidators: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ message: 'Mesa no encontrada' });
+    }
+    if (req.io) req.io.emit('tables:update');
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 
