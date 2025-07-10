@@ -253,6 +253,12 @@ const Inventory = () => {
     }
   };
 
+  // Agrupar productos por categoría
+  const productsByCategory = categoryOptions.map(cat => ({
+    category: cat,
+    products: products.filter(p => p.category === cat)
+  })).filter(group => group.products.length > 0);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -279,59 +285,65 @@ const Inventory = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-        {products.map((product) => (
-          <div key={product._id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden border border-green-100">
-            <div className="aspect-w-1 aspect-h-1">
-              {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-32 object-cover"
-                />
-              ) : (
-                <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">Sin imagen</span>
+      {/* Secciones por categoría */}
+      {productsByCategory.map(group => (
+        <div key={group.category} className="mb-8">
+          <h2 className="text-lg font-bold text-green-800 mb-3 pl-1">{group.category}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+            {group.products.map((product) => (
+              <div key={product._id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden border border-green-100">
+                <div className="aspect-w-1 aspect-h-1">
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-full h-32 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
+                      <span className="text-gray-400 text-sm">Sin imagen</span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="p-3">
-              <h3 className="text-base font-semibold text-green-900 mb-1 truncate">{product.name}</h3>
-              <p className="text-green-700 font-bold mb-2 text-sm">
-                {new Intl.NumberFormat('es-ES', {
-                  style: 'currency',
-                  currency: 'EUR'
-                }).format(product.price)}
-              </p>
-              <div className="flex justify-between items-center mb-2">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${product.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                  {product.available ? 'Disponible' : 'No disponible'}
-                </span>
-                <button
-                  onClick={() => handleToggleAvailability(product)}
-                  className={`ml-2 px-2 py-0.5 rounded-full font-bold text-xs transition-colors shadow ${product.available ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-400 text-white hover:bg-red-500'}`}
-                >
-                  {product.available ? 'No disponible' : 'Disponible'}
-                </button>
+                <div className="p-3">
+                  <h3 className="text-base font-semibold text-green-900 mb-1 truncate">{product.name}</h3>
+                  <p className="text-green-700 font-bold mb-2 text-sm">
+                    {new Intl.NumberFormat('es-ES', {
+                      style: 'currency',
+                      currency: 'EUR'
+                    }).format(product.price)}
+                  </p>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${product.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                      {product.available ? 'Disponible' : 'No disponible'}
+                    </span>
+                    <button
+                      onClick={() => handleToggleAvailability(product)}
+                      className={`ml-2 px-2 py-0.5 rounded-full font-bold text-xs transition-colors shadow ${product.available ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-400 text-white hover:bg-red-500'}`}
+                    >
+                      {product.available ? 'No disponible' : 'Disponible'}
+                    </button>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => handleOpenModal(product)}
+                      className="text-green-700 hover:text-green-900 font-semibold transition-colors text-xs"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product._id)}
+                      className="text-red-600 hover:text-red-700 font-semibold transition-colors text-xs"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => handleOpenModal(product)}
-                  className="text-green-700 hover:text-green-900 font-semibold transition-colors text-xs"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(product._id)}
-                  className="text-red-600 hover:text-red-700 font-semibold transition-colors text-xs"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
 
       <div className="mt-12 flex justify-center">
         <button
