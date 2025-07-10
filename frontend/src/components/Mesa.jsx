@@ -46,9 +46,11 @@ function Mesa({ numero, isOccupied, isServing, onConfirmService, isCustom, name,
           <rect x="80" y="45" width="15" height="10" rx="2" fill="#111" />
         </svg>
       </span>
-      <span className="text-lg font-semibold text-slate-700">Mesa {numero}</span>
-      {name && (
-        <span className="text-base text-indigo-700 mt-1">{name}</span>
+      {/* Nombre principal de la mesa */}
+      {name ? (
+        <span className="text-lg font-bold text-black text-center">{name}</span>
+      ) : (
+        <span className="text-lg font-bold text-black text-center">Mesa {numero}</span>
       )}
       {isServing && (
         <button
