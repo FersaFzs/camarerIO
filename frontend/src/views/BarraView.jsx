@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import MesaBarra from '../components/MesaBarra';
-import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable, cleanTableRounds } from '../services/roundService';
+import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable, cleanTableRounds, markRoundAsPrepared, getTableRounds } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
@@ -182,8 +182,10 @@ export default function BarraView() {
       setServingTables(servingSet);
       // Comandas activas
       const rounds = await getActiveRounds();
+      // Agrupar por mesa solo las rondas NO preparadas
       const ordersByTable = {};
       rounds.forEach(round => {
+        if (round.isPrepared) return; // Solo mostrar aviso si la ronda NO está preparada
         const tnum = round.tableNumber;
         if (!ordersByTable[tnum]) ordersByTable[tnum] = [];
         round.products.forEach(item => {
@@ -411,12 +413,20 @@ export default function BarraView() {
                   className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-lg shadow hover:bg-green-700 transition-colors mb-2"
                   onClick={async () => {
                     try {
-                      await cleanTableRounds(selectedTable.number);
+                      // Obtener las rondas activas de la mesa
+                      const data = await getTableRounds(selectedTable.number);
+                      const rounds = data.rounds || [];
+                      // Marcar como preparada cada ronda no preparada
+                      for (const round of rounds) {
+                        if (!round.isPrepared) {
+                          await markRoundAsPrepared(round._id);
+                        }
+                      }
                       setShowOrderModal(false);
-                      setSuccessMessage('Comanda marcada como preparada y mesa limpia');
+                      setSuccessMessage('Comanda marcada como preparada');
                       loadData();
                     } catch (err) {
-                      setError('Error al limpiar la mesa');
+                      setError('Error al marcar la comanda como preparada');
                     }
                   }}
                 >

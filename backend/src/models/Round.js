@@ -38,6 +38,10 @@ const roundSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isPrepared: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

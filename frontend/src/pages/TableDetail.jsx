@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, markAllRoundsAsPaid, updateRoundProducts, confirmTableService, generateTicket, fetchTableStatuses, fetchCustomTables } from '../services/roundService'
 import ProductList from '../components/ProductList'
 import '../mesas-modern.css'
@@ -13,6 +14,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/
 function TableDetail() {
   const { tableNumber } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth();
   const [currentRound, setCurrentRound] = useState(null)
   const [rounds, setRounds] = useState([])
   const [total, setTotal] = useState(0)
@@ -345,12 +347,12 @@ function TableDetail() {
       {/* Cabecera minimalista */}
       <div className="w-full max-w-3xl mx-auto pt-8 pb-2 flex flex-col items-center">
         <div className="w-full rounded-2xl bg-green-50 border border-green-100 shadow-sm flex items-center justify-between mb-8 px-6 py-5">
-          <button
-            onClick={() => navigate('/mesas')}
+            <button
+            onClick={() => navigate(user?.role === 'barra' ? '/barra' : '/mesas')}
             className="text-green-700 hover:bg-green-100 hover:text-green-900 text-base font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
-          >
+            >
             ← Volver
-          </button>
+            </button>
           <span className="text-2xl font-bold text-green-900 tracking-tight text-center flex-1">
             Mesa {tableNumber}
           </span>
@@ -376,75 +378,75 @@ function TableDetail() {
         ) : error ? (
           <div className="text-center text-red-500 py-12">{error}</div>
         ) : rounds.length === 0 ? (
-          <div className="text-center py-12">
+            <div className="text-center py-12">
             <p className="text-neutral-500 mb-6">No hay pedidos activos para esta mesa</p>
-            <button
-              onClick={handleAddRound}
+              <button
+                onClick={handleAddRound}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg shadow-sm"
-            >
-              Nueva Ronda
-            </button>
-          </div>
-        ) : (
+              >
+                Nueva Ronda
+              </button>
+            </div>
+          ) : (
           <div className="space-y-8 w-full">
             {/* Área de rondas */}
             <div className="bg-white rounded-2xl shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 text-neutral-900">Rondas Activas</h2>
-              <div className="space-y-6">
-                {rounds.map((round, roundIndex) => {
-                  const roundTotal = calculateRoundTotal(round)
-                  return (
+                <div className="space-y-6">
+                  {rounds.map((round, roundIndex) => {
+                    const roundTotal = calculateRoundTotal(round)
+                    return (
                     <div key={round._id} className="border border-neutral-200 rounded-xl p-4 bg-neutral-50">
-                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold text-green-700">Ronda {roundIndex + 1}</h3>
-                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-4">
                           <span className="text-lg font-bold text-neutral-900">
-                            ${roundTotal.toFixed(2)}
-                          </span>
-                          <button
-                            onClick={() => handlePayment(round)}
+                              ${roundTotal.toFixed(2)}
+                            </span>
+                            <button
+                              onClick={() => handlePayment(round)}
                             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
-                          >
-                            Pagar Ronda
-                          </button>
+                            >
+                              Pagar Ronda
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        {round.products.map((item, index) => (
+                        <div className="space-y-2">
+                          {round.products.map((item, index) => (
                           <div key={index} className="flex justify-between items-center p-2 bg-white rounded">
-                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-2">
                               <span className="text-neutral-800">
-                                {item.product?.name || 'Producto no disponible'}
-                              </span>
+                                  {item.product?.name || 'Producto no disponible'}
+                                </span>
                               <span className="text-sm text-neutral-400">
-                                x{item.quantity}
+                                  x{item.quantity}
+                                </span>
+                              </div>
+                            <span className="font-medium text-neutral-900">
+                                ${((item.product?.price || 0) * item.quantity).toFixed(2)}
                               </span>
                             </div>
-                            <span className="font-medium text-neutral-900">
-                              ${((item.product?.price || 0) * item.quantity).toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
-            </div>
             {/* Total y acciones */}
             <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col gap-6">
-              <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center">
                 <span className="text-xl font-semibold text-neutral-900">Total de la cuenta:</span>
-                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4">
                   <span className="text-2xl font-bold text-green-700">
-                    ${total.toFixed(2)}
-                  </span>
-                  <button
-                    onClick={() => handlePayment()}
+                      ${total.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => handlePayment()}
                     className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
-                  >
-                    Pagar Todo
-                  </button>
+                    >
+                      Pagar Todo
+                    </button>
                 </div>
               </div>
               <div className="flex flex-wrap justify-end gap-4">

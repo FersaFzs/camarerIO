@@ -41,46 +41,46 @@ function Login() {
       <div className="w-full max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center">
         <img src={logoApalanque} alt="Logo" className="h-32 mb-6 object-contain" style={{ maxWidth: 240 }} />
         <p className="text-green-700 mb-6 text-base">Inicia sesión para continuar</p>
-        {error && (
+          {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm w-full text-center">
-            {error}
-          </div>
-        )}
+              {error}
+            </div>
+          )}
         <form onSubmit={handleSubmit} className="space-y-5 w-full">
-          <div>
+            <div>
             <label htmlFor="username" className="block text-sm font-medium text-green-900 mb-1">Usuario o Email</label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border border-green-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-base bg-green-50"
-              placeholder="Usuario o email"
-              required
-              disabled={loading}
-            />
-          </div>
-          <div>
+                placeholder="Usuario o email"
+                required
+                disabled={loading}
+              />
+            </div>
+            <div>
             <label htmlFor="password" className="block text-sm font-medium text-green-900 mb-1">Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border border-green-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-base bg-green-50"
-              placeholder="Contraseña"
-              required
+                placeholder="Contraseña"
+                required
+                disabled={loading}
+              />
+            </div>
+            <button
+              type="submit"
               disabled={loading}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
             className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-sm"
-          >
-            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </button>
-        </form>
+            >
+              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            </button>
+          </form>
       </div>
     </div>
   )

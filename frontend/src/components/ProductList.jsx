@@ -126,8 +126,8 @@ function ProductList({ onAddProducts, onCancel }) {
         };
       }
       return {
-        product: productId,
-        quantity
+      product: productId,
+      quantity
       };
     });
     if (productsToAdd.length > 0) {
@@ -322,32 +322,32 @@ function ProductList({ onAddProducts, onCancel }) {
                     {selectedList.map(product => (
                       <div key={product._id} className="flex items-center justify-between bg-green-50 rounded-lg p-2">
                         <div className="flex items-center gap-2">
-                          {product.imageUrl ? (
+              {product.imageUrl ? (
                             <img src={product.imageUrl} alt={product.name} className="w-8 h-8 object-cover rounded" />
-                          ) : (
+              ) : (
                             <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center text-xs text-green-400">Sin</div>
-                          )}
+              )}
                           <span className="font-medium text-green-900 truncate max-w-[120px] text-sm">{product.name}</span>
-                        </div>
+              </div>
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
+                <button
+                  type="button"
                             className="bg-green-100 text-green-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-green-200"
                             onClick={() => handleQuantityChange(product._id, -1)}
-                          >
-                            -
-                          </button>
+                >
+                  -
+                </button>
                           <span className="font-bold text-green-700 text-sm">{product.quantity}</span>
-                          <button
-                            type="button"
+                <button
+                  type="button"
                             className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-green-700"
                             onClick={() => handleQuantityChange(product._id, 1)}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          ))}
                   </div>
                 </div>
               </div>
@@ -468,15 +468,15 @@ function ProductList({ onAddProducts, onCancel }) {
               <span className="text-sm text-green-600 font-medium">
                 {selectedCount} producto{selectedCount !== 1 ? 's' : ''} seleccionado{selectedCount !== 1 ? 's' : ''}
               </span>
-            </div>
-            <button
-              onClick={handleAddToRound}
-              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg shadow-md hover:shadow-lg"
-            >
-              Añadir a la Ronda
-            </button>
           </div>
+          <button
+            onClick={handleAddToRound}
+              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg shadow-md hover:shadow-lg"
+          >
+              Añadir a la Ronda
+          </button>
         </div>
+      </div>
       )}
 
       {/* Modal de producto personalizado */}
@@ -489,32 +489,32 @@ function ProductList({ onAddProducts, onCancel }) {
                 <label htmlFor="customProductName" className="block text-base font-semibold text-green-800 mb-2 tracking-tight">
                   Nombre del producto
                 </label>
-                <input
-                  type="text"
+              <input
+                type="text"
                   id="customProductName"
-                  value={customProduct.name}
-                  onChange={e => setCustomProduct(prev => ({ ...prev, name: e.target.value }))}
+                value={customProduct.name}
+                onChange={e => setCustomProduct(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full border border-green-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50 text-green-900 placeholder-green-300 text-base font-medium shadow-sm"
                   placeholder="Ej: Café especial"
-                  required
+                required
                   autoFocus
-                />
+              />
               </div>
               <div>
                 <label htmlFor="customProductPrice" className="block text-base font-semibold text-green-800 mb-2 tracking-tight">
                   Precio (€)
                 </label>
-                <input
-                  type="number"
+              <input
+                type="number"
                   id="customProductPrice"
-                  value={customProduct.price}
-                  onChange={e => setCustomProduct(prev => ({ ...prev, price: e.target.value }))}
+                value={customProduct.price}
+                onChange={e => setCustomProduct(prev => ({ ...prev, price: e.target.value }))}
                   className="w-full border border-green-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50 text-green-900 placeholder-green-300 text-base font-medium shadow-sm"
                   placeholder="Ej: 2.50"
-                  min="0"
-                  step="0.01"
+                min="0"
+                step="0.01"
                   required
-                />
+              />
               </div>
               <div>
                 <label htmlFor="customProductCategory" className="block text-base font-semibold text-green-800 mb-2 tracking-tight">

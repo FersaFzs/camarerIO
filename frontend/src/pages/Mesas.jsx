@@ -230,11 +230,11 @@ function Mesas() {
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded bg-green-200 border border-green-400"></span>
             <span className="text-xs text-neutral-600">Libre</span>
-          </div>
+              </div>
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded bg-yellow-100 border border-yellow-300"></span>
             <span className="text-xs text-neutral-600">Sirviendo</span>
-          </div>
+              </div>
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded bg-red-200 border border-red-400"></span>
             <span className="text-xs text-neutral-600">Ocupada</span>
@@ -244,20 +244,20 @@ function Mesas() {
       {/* Grid de mesas numeradas y personalizadas */}
       <div className="w-full max-w-4xl mx-auto px-2 pb-12 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
         {/* Mesas numeradas */}
-        {[...Array(10)].map((_, index) => {
+            {[...Array(10)].map((_, index) => {
           const numeroMesa = index + 1;
           const isOccupied = occupiedTables.has(numeroMesa.toString());
           const isServing = servingTables.has(numeroMesa.toString());
-          return (
-            <Mesa
-              key={numeroMesa}
-              numero={numeroMesa}
-              isOccupied={isOccupied}
+              return (
+                <Mesa 
+                  key={numeroMesa}
+                  numero={numeroMesa}
+                  isOccupied={isOccupied}
               isServing={isServing}
               onConfirmService={handleConfirmService}
-            />
+                />
           );
-        })}
+            })}
         {/* Mesas personalizadas */}
         {filteredCustomTables.map((table) => {
           const isOccupied = occupiedTables.has(table.number?.toString?.());
@@ -335,13 +335,13 @@ function Mesas() {
                 >
                   Cancelar
                 </button>
-                <button
+            <button 
                   type="submit"
                   disabled={isCreatingTable}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+            >
                   {isCreatingTable ? 'Creando...' : 'Crear Mesa'}
-                </button>
+            </button>
               </div>
             </form>
           </div>

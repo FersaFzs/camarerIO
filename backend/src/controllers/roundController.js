@@ -98,7 +98,7 @@ export const markRoundAsPaid = async (req, res) => {
     round.isPaid = true
     round.paidAt = new Date()
     await round.save()
-
+    
     // Eliminar productos personalizados de helado y cubata usados en esta ronda
     const productIdsToDelete = [];
     for (const item of round.products) {
@@ -245,7 +245,7 @@ export const updateRoundProducts = async (req, res) => {
     console.error('Error al actualizar productos de la ronda:', error)
     res.status(500).json({ message: 'Error al actualizar productos de la ronda' })
   }
-}
+} 
 
 // Confirmar el servicio de una mesa
 export const confirmTableService = async (req, res) => {
@@ -314,5 +314,25 @@ export const getAllActiveRounds = async (req, res) => {
     res.status(200).json(rounds);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+}; 
+
+// Marcar una ronda como preparada
+export const markRoundAsPrepared = async (req, res) => {
+  try {
+    const { roundId } = req.params;
+    const round = await Round.findById(roundId);
+    if (!round) {
+      return res.status(404).json({ message: 'Ronda no encontrada' });
+    }
+    round.isPrepared = true;
+    await round.save();
+    // Emitir evento para actualizar en tiempo real
+    if (req.io) {
+      req.io.emit('rounds:update', { tableNumber: round.tableNumber });
+    }
+    res.json({ message: 'Ronda marcada como preparada', round });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al marcar la ronda como preparada', error: error.message });
   }
 }; 

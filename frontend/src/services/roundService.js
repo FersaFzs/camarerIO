@@ -379,3 +379,22 @@ export const cleanTableRounds = async (tableNumber) => {
     throw error;
   }
 }; 
+
+export const markRoundAsPrepared = async (roundId) => {
+  try {
+    const response = await fetch(`${API_URL}/rounds/${roundId}/prepared`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeader()
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Error al marcar la ronda como preparada');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error al marcar la ronda como preparada:', error);
+    throw error;
+  }
+}; 

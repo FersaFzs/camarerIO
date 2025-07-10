@@ -170,7 +170,7 @@ export const createTestUser = async () => {
   } catch (error) {
     console.error('Error al crear usuarios de prueba:', error)
   }
-}
+} 
 
 // Crear usuario (solo admin)
 export const register = async (req, res) => {
