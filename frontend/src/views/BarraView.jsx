@@ -127,8 +127,8 @@ export default function BarraView() {
   }, [editLayout, dragInfo]); // Añadir dependencias
 
   // Función para cargar mesas, estados y comandas
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       let customTables = await fetchCustomTables();
@@ -244,13 +244,13 @@ export default function BarraView() {
 
   // Cargar datos y conectar socket
   useEffect(() => {
-    loadData();
+    loadData(true); // Primera carga: mostrar spinner
     const socket = io(SOCKET_URL);
     socket.on('rounds:update', () => {
-      loadData();
+      loadData(false); // Actualización por socket: NO mostrar spinner
     });
     socket.on('tables:update', () => {
-      loadData();
+      loadData(false);
     });
     return () => {
       socket.disconnect();

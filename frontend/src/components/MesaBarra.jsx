@@ -26,11 +26,11 @@ function MesaBarra({ numero, name, isOccupied, isServing, hasOrder, isDragging }
       <span className="absolute top-3 right-3 w-3.5 h-3.5 rounded-full border-2 border-white shadow" style={{ background: getStatusColor() }}></span>
       {/* Icono de mesa */}
       <span className="w-20 h-20 flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="80" height="80">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="90" height="90">
           {/* Mesa redonda */}
-          <circle cx="50" cy="50" r="20" fill="#166534" />
+          <circle cx="50" cy="50" r="32" fill="#166534" />
           {/* Número dentro de la mesa */}
-          <text x="50" y="57" textAnchor="middle" fontSize="1.8em" fontWeight="bold" fill="#fff">{numero}</text>
+          <text x="50" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="2.2em" fontWeight="bold" fill="#fff">{numero}</text>
           {/* Sillas (cuatro alrededor de la mesa) */}
           <rect x="45" y="5" width="10" height="15" rx="2" fill="#111" />
           <rect x="45" y="80" width="10" height="15" rx="2" fill="#111" />
