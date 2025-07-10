@@ -23,6 +23,7 @@ function Mesas() {
   // Estado para forzar re-render tras mover
   const [draggedTableId, setDraggedTableId] = useState(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [defaultTables, setDefaultTables] = useState([])
 
   const navigate = useNavigate()
 
@@ -67,6 +68,8 @@ function Mesas() {
         const tables = await fetchCustomTables()
         // Filtrar mesas sin número
         setCustomTables(tables.filter(t => typeof t.number === 'number' && t.number !== null))
+        // Guardar mesas default (1-10) para mostrar nombre
+        setDefaultTables(tables.filter(t => typeof t.number === 'number' && t.number >= 1 && t.number <= 10))
       } catch (err) {
         console.error('Error al cargar mesas personalizadas:', err)
       }
@@ -248,14 +251,17 @@ function Mesas() {
           const numeroMesa = index + 1;
           const isOccupied = occupiedTables.has(numeroMesa.toString());
           const isServing = servingTables.has(numeroMesa.toString());
-              return (
-                <Mesa 
-                  key={numeroMesa}
-                  numero={numeroMesa}
-                  isOccupied={isOccupied}
+          // Buscar el nombre de la mesa default
+          const mesaDefault = defaultTables.find(t => t.number === numeroMesa);
+          return (
+            <Mesa 
+              key={numeroMesa}
+              numero={numeroMesa}
+              isOccupied={isOccupied}
               isServing={isServing}
+              name={mesaDefault?.name}
               onConfirmService={handleConfirmService}
-                />
+            />
           );
             })}
         {/* Mesas personalizadas */}
