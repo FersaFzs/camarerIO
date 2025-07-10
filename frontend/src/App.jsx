@@ -22,7 +22,7 @@ function App() {
         </PrivateRoute>
       } />
       <Route path="/mesas/:tableNumber" element={
-        <PrivateRoute allowedRoles={['user']}>
+        <PrivateRoute allowedRoles={['user', 'barra']}>
           <TableDetail />
         </PrivateRoute>
       } />

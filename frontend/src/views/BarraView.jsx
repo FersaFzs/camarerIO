@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import MesaBarra from '../components/MesaBarra';
-import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable } from '../services/roundService';
+import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable, cleanTableRounds } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
@@ -407,6 +407,21 @@ export default function BarraView() {
                     </div>
                   ))}
                 </div>
+                <button
+                  className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-lg shadow hover:bg-green-700 transition-colors mb-2"
+                  onClick={async () => {
+                    try {
+                      await cleanTableRounds(selectedTable.number);
+                      setShowOrderModal(false);
+                      setSuccessMessage('Comanda marcada como preparada y mesa limpia');
+                      loadData();
+                    } catch (err) {
+                      setError('Error al limpiar la mesa');
+                    }
+                  }}
+                >
+                  Listo
+                </button>
                 <button
                   className="w-full py-3 bg-neutral-200 text-green-900 rounded-xl font-bold text-lg shadow hover:bg-neutral-300 transition-colors mb-2"
                   onClick={() => { navigate(`/mesas/${selectedTable.number}`); }}

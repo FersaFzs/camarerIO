@@ -363,3 +363,19 @@ export const updateTablePosition = async (tableId, x, y) => {
   if (!res.ok) throw new Error('Error al actualizar la posición de la mesa');
   return await res.json();
 }; 
+
+export const cleanTableRounds = async (tableNumber) => {
+  try {
+    const response = await fetch(`${API_URL}/rounds/table/${tableNumber}/clean`, {
+      method: 'DELETE',
+      headers: authHeader()
+    });
+    if (!response.ok) {
+      throw new Error('Error al limpiar la mesa');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error al limpiar la mesa:', error);
+    throw error;
+  }
+}; 
