@@ -9,6 +9,7 @@ import Login from './pages/Login'
 import PrivateRoute from './components/PrivateRoute'
 import Advanced from './pages/admin/Advanced'
 import BarraView from './views/BarraView'
+import TableAdmin from './pages/admin/TableAdmin'
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
         <Route path="inventory" element={<Inventory />} />
         <Route path="settings" element={<Settings />} />
         <Route path="advanced" element={<Advanced />} />
+        <Route path="tables" element={<TableAdmin />} />
       </Route>
 
       {/* Ruta para barra/comandas */}

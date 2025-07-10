@@ -64,6 +64,23 @@ function AdminSidebar() {
           </svg>
           <span>Settings</span>
         </NavLink>
+
+        <NavLink
+          to="/admin/tables"
+          className={({ isActive }) =>
+            `flex items-center space-x-2 p-3 rounded-xl transition-colors font-semibold text-lg ${
+              isActive
+                ? 'bg-green-600 text-white border border-green-700 shadow'
+                : 'text-green-800 hover:bg-green-100 hover:text-green-900'
+            }`
+          }
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2" fill="none" />
+            <rect x="3" y="9" width="14" height="2" rx="1" fill="currentColor" />
+          </svg>
+          <span>Mesas</span>
+        </NavLink>
       </nav>
 
       <div className="p-4 border-t border-green-100 mt-auto bg-green-50">
