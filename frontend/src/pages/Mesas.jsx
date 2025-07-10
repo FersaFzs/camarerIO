@@ -203,10 +203,14 @@ function Mesas() {
     }
   }
 
-  // Filtrar mesas personalizadas sin número y avisar
+  // Filtrar mesas personalizadas sin número y ocultar las que tengan número entre 1 y 10
   const filteredCustomTables = customTables.filter(t => {
     if (typeof t.number === 'undefined' || t.number === null) {
       console.warn('Mesa personalizada sin número:', t);
+      return false;
+    }
+    // Ocultar mesas personalizadas con número 1-10 (ya se muestran como numeradas)
+    if (t.number >= 1 && t.number <= 10) {
       return false;
     }
     return true;
@@ -315,6 +319,9 @@ function Mesas() {
                   required
                   autoFocus
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  El número de mesa se asigna automáticamente a partir del 11. Las mesas personalizadas nunca ocuparán los números 1-10.
+                </p>
               </div>
               <div className="flex justify-end space-x-4">
                 <button
