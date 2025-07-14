@@ -20,7 +20,9 @@ function AdminSidebar({ open, onClose }) {
       />
       {/* Sidebar */}
       <div
-        className="h-screen w-64 flex flex-col shadow-lg border-r border-green-100 font-inter z-50 transition-transform duration-300 fixed md:static md:block bg-white text-green-900"
+        className={`h-screen w-64 flex flex-col shadow-lg border-r border-green-100 font-inter z-50 transition-transform duration-300 fixed top-0 left-0
+        ${open ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 md:block bg-white text-green-900`}
         style={{ minWidth: 256 }}
       >
         {/* Botón cerrar solo en móvil */}
