@@ -268,7 +268,7 @@ const Inventory = () => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto bg-white rounded-2xl shadow-md p-2 sm:p-4 md:p-8 mt-2 md:mt-8">
+    <div className="w-full bg-white rounded-2xl shadow-md p-2 sm:p-4 md:p-8 mt-2 md:mt-8">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-2 md:gap-0">
         <h1 className="text-2xl md:text-3xl font-bold text-green-900">Inventario</h1>
         <button

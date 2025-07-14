@@ -140,7 +140,7 @@ export default function TableAdmin() {
 
   return (
     <div className="min-h-screen w-full bg-neutral-50 font-inter flex flex-col items-center justify-start">
-      <div className="w-full max-w-5xl mx-auto pt-4 pb-2 sm:pt-8 sm:pb-2 md:pt-12 md:pb-4 flex flex-col items-center">
+      <div className="w-full pt-4 pb-2 sm:pt-8 sm:pb-2 md:pt-12 md:pb-4 flex flex-col items-center">
         <div className="w-full rounded-2xl bg-green-50 border border-green-100 shadow-sm flex flex-col md:flex-row items-center justify-between mb-4 md:mb-8 px-2 sm:px-6 py-3 sm:py-5 md:px-8 md:py-6 gap-2 md:gap-0">
           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-900 tracking-tight text-center flex-1">
             Gestión de Mesas Default
