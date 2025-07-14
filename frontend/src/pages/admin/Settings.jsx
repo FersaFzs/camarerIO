@@ -141,7 +141,7 @@ function Settings() {
     <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-md p-2 sm:p-4 md:p-8 mt-2 md:mt-8">
       {/* Sección Gestión de Usuarios */}
       <div className="mb-8 md:mb-12">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 md:mb-8 gap-2 md:gap-0">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-2 md:gap-0">
           <h1 className="text-xl md:text-2xl font-bold text-green-900">Gestión de Usuarios</h1>
           <button
             onClick={handleOpenCreate}

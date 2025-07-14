@@ -140,21 +140,21 @@ export default function TableAdmin() {
 
   return (
     <div className="min-h-screen w-full bg-neutral-50 font-inter flex flex-col items-center justify-start">
-      <div className="w-full max-w-5xl mx-auto pt-8 pb-2 flex flex-col items-center">
-        <div className="w-full rounded-2xl bg-green-50 border border-green-100 shadow-sm flex items-center justify-between mb-8 px-6 py-5">
-          <span className="text-2xl font-bold text-green-900 tracking-tight text-center flex-1">
+      <div className="w-full max-w-5xl mx-auto pt-4 pb-2 sm:pt-8 sm:pb-2 md:pt-12 md:pb-4 flex flex-col items-center">
+        <div className="w-full rounded-2xl bg-green-50 border border-green-100 shadow-sm flex flex-col md:flex-row items-center justify-between mb-4 md:mb-8 px-2 sm:px-6 py-3 sm:py-5 md:px-8 md:py-6 gap-2 md:gap-0">
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-900 tracking-tight text-center flex-1">
             Gestión de Mesas Default
           </span>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 mt-2 md:mt-0">
             <button
-              className="px-5 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition-colors"
+              className="px-4 md:px-5 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition-colors"
               onClick={() => setEditMode(v => !v)}
             >
               {editMode ? 'Salir de edición' : 'Editar layout'}
             </button>
             {editMode && (
               <button
-                className="px-5 py-2 bg-green-700 text-white rounded-lg font-semibold shadow hover:bg-green-800 transition-colors"
+                className="px-4 md:px-5 py-2 bg-green-700 text-white rounded-lg font-semibold shadow hover:bg-green-800 transition-colors"
                 onClick={handleCreate}
               >
                 Crear mesa
@@ -162,7 +162,7 @@ export default function TableAdmin() {
             )}
             {editMode && (
               <button
-                className="px-5 py-2 bg-green-900 text-white rounded-lg font-semibold shadow hover:bg-green-800 transition-colors"
+                className="px-4 md:px-5 py-2 bg-green-900 text-white rounded-lg font-semibold shadow hover:bg-green-800 transition-colors"
                 onClick={handleSaveLayout}
               >
                 Guardar cambios
@@ -171,7 +171,7 @@ export default function TableAdmin() {
           </div>
         </div>
         {/* Layout visual tipo barra */}
-        <div ref={areaRef} className="relative w-full h-[500px] bg-white rounded-2xl border border-green-100 shadow-md mb-8" style={{ minHeight: 400 }}>
+        <div ref={areaRef} className="relative w-full h-[400px] sm:h-[500px] bg-white rounded-2xl border border-green-100 shadow-md mb-8" style={{ minHeight: 300 }}>
           {tables.map(table => (
             <div
               key={table._id}

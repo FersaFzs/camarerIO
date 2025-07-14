@@ -19,7 +19,7 @@ const AdminLayout = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-      <main className="flex-1 min-h-screen bg-neutral-50 transition-all md:ml-64 p-2 sm:p-4 md:p-8">
+      <main className="flex-1 min-h-screen bg-neutral-50 transition-all p-2 sm:p-4 md:p-8 md:ml-64">
         <Outlet />
       </main>
     </div>

@@ -268,12 +268,12 @@ const Inventory = () => {
   }
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-green-900">Inventario</h1>
+    <div className="w-full max-w-6xl mx-auto bg-white rounded-2xl shadow-md p-2 sm:p-4 md:p-8 mt-2 md:mt-8">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-2 md:gap-0">
+        <h1 className="text-2xl md:text-3xl font-bold text-green-900">Inventario</h1>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg font-semibold w-full md:w-auto"
         >
           Nuevo Producto
         </button>
@@ -289,7 +289,7 @@ const Inventory = () => {
       {productsByCategory.map(group => (
         <div key={group.category} className="mb-6 md:mb-8">
           <h2 className="text-base md:text-lg font-bold text-green-800 mb-2 md:mb-3 pl-1">{group.category}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-4">
             {group.products.map((product) => (
               <div key={product._id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden border border-green-100">
                 <div className="aspect-w-1 aspect-h-1">
