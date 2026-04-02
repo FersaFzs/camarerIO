@@ -24,8 +24,11 @@ app.use(cors({
 const io = new SocketIOServer(server, {
   cors: {
     origin: ['http://localhost:5173', 'http://localhost:5174', 'https://camarerio-frontend.onrender.com'],
-    credentials: true
-  }
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['my-custom-header', 'Authorization', 'Content-Type']
+  },
+  transports: ['polling', 'websocket']
 })
 
 // Middleware para exponer io en req
