@@ -17,14 +17,14 @@ const server = http.createServer(app)
 
 // Configuración CORS simple y funcional
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://camarerio-frontend.onrender.com'],
-  credentials: true
+  origin: '*',
+  credentials: false
 }))
 
 const io = new SocketIOServer(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://camarerio-frontend.onrender.com'],
-    credentials: true
+    origin: '*',
+    credentials: false
   }
 })
 
@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data: https://camarerio.onrender.com; connect-src 'self' https://camarerio.onrender.com; style-src 'self' 'unsafe-inline'; script-src 'self';"
+    "default-src 'self'; img-src 'self' data: https://camarerio.onrender.com; connect-src 'self' https://camarerio.onrender.com wss://camarerio.onrender.com wss://* https://*; style-src 'self' 'unsafe-inline'; script-src 'self';"
   );
   next();
 });
