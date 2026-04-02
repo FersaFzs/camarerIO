@@ -1,0 +1,49 @@
+
+--- NUEVA IMPRESIÓN: PAYMENT ---
+Fecha: 23/3/2026, 16:25:47
+--- CAMARERIO ---
+Ticket Final (PAGADO)
+Mesa: 10
+Método: efectivo
+23/3/2026, 16:25:47
+--------------------------
+2x Fanta Limón       $5.60
+--------------------------
+TOTAL PAGADO: $5.60
+¡GRACIAS POR SU VISITA!
+
+[COMANDO ENVIADO: ABRIR CAJÓN (ESC p)]
+-------------------------------------------
+
+
+--- NUEVA IMPRESIÓN: PAYMENT ---
+Fecha: 23/3/2026, 16:44:31
+--- CAMARERIO ---
+Ticket Final (PAGADO)
+Mesa: 2
+Método: efectivo
+23/3/2026, 16:44:31
+--------------------------
+2x Fanta Limón       $5.60
+--------------------------
+TOTAL PAGADO: $5.60
+¡GRACIAS POR SU VISITA!
+
+[COMANDO ENVIADO: ABRIR CAJÓN (ESC p)]
+-------------------------------------------
+
+
+--- NUEVA IMPRESIÓN: ACCOUNT ---
+Fecha: 23/3/2026, 16:46:18
+--- CAMARERIO ---
+Ticket Final (PAGADO)
+Mesa: 3
+Método: tarjeta
+23/3/2026, 16:46:18
+--------------------------
+2x Estrella Galicia  $5.60
+--------------------------
+TOTAL PAGADO: $5.60
+¡GRACIAS POR SU VISITA!
+-------------------------------------------
+

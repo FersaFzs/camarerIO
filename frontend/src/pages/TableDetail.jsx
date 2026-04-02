@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, markAllRoundsAsPaid, updateRoundProducts, confirmTableService, generateTicket, fetchTableStatuses, fetchCustomTables } from '../services/roundService'
+import { getTableRounds, createRound, addProductsToRound, markRoundAsPaid, updateRoundProducts, confirmTableService, generateTicket, fetchTableStatuses, fetchCustomTables } from '../services/roundService'
+import { printPreTicket } from '../services/printerService'
 import ProductList from '../components/ProductList'
 import '../mesas-modern.css'
 import TicketView from '../components/TicketView'
 import io from 'socket.io-client'
 import AdvancedMenu from '../components/AdvancedMenu'
 
-const SOCKET_URL = 'https://camarerio.onrender.com'
-const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com/api'
+const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://camarerio.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://camarerio.onrender.com/api';
 
 function TableDetail() {
   const { tableNumber } = useParams()
@@ -21,16 +22,17 @@ function TableDetail() {
   const [isLoading, setIsLoading] = useState(true)
   const [showProductList, setShowProductList] = useState(false)
   const [isNewRound, setIsNewRound] = useState(false)
+  
+  // Checkout states (solo para barra/admin)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [selectedRoundForPayment, setSelectedRoundForPayment] = useState(null)
   const [showSelectivePayment, setShowSelectivePayment] = useState(false)
   const [selectedProducts, setSelectedProducts] = useState([])
+  const [isPrinting, setIsPrinting] = useState(false)
+
   const [error, setError] = useState(null)
   const [pendingProducts, setPendingProducts] = useState([])
   const [serviceConfirmationPending, setServiceConfirmationPending] = useState(false)
-  const [showTicketModal, setShowTicketModal] = useState(false)
-  const [currentTicket, setCurrentTicket] = useState(null)
-  const [showTicketConfirm, setShowTicketConfirm] = useState(false)
+
   const [showCleanConfirm, setShowCleanConfirm] = useState(false)
   const [cleaning, setCleaning] = useState(false)
   const [cleanSuccess, setCleanSuccess] = useState(null)
@@ -107,39 +109,69 @@ function TableDetail() {
     }
   }
 
-  const handlePayment = (round = null) => {
-    setSelectedRoundForPayment(round)
-    setShowPaymentModal(true)
-  }
 
-  const handleConfirmPayment = async () => {
+  const handlePrintPreTicket = async () => {
     try {
-      let roundIds = []
-      if (selectedRoundForPayment) {
-        await markRoundAsPaid(selectedRoundForPayment._id)
-        roundIds = [selectedRoundForPayment._id]
-      } else {
-        await markAllRoundsAsPaid(tableNumber)
-        roundIds = rounds.map(round => round._id)
-      }
-
-      // Guardar los datos para el ticket pero no mostrarlo aún
-      const ticket = await generateTicket(tableNumber, roundIds)
-      setCurrentTicket(ticket)
-      setShowTicketConfirm(true)
-      
-      await loadTableRounds()
-      setShowPaymentModal(false)
-      setSelectedRoundForPayment(null)
-    } catch (err) {
-      console.error('Error al procesar el pago:', err)
-      setError('Error al procesar el pago')
+      setIsPrinting(true)
+      const items = []
+      rounds.forEach(r => r.products.forEach(p => items.push({
+        name: p.product?.name || p.name,
+        quantity: p.quantity,
+        total: p.quantity * (p.product?.price || p.price || 0)
+      })))
+      await printPreTicket(tableNumber, items, total)
+    } catch(err) {
+      setError('Error al imprimir')
+    } finally {
+      setIsPrinting(false)
     }
   }
 
-  const handleCancelPayment = () => {
-    setShowPaymentModal(false)
-    setSelectedRoundForPayment(null)
+  const handleConfirmPayment = async (roundIds, method = 'efectivo') => {
+    try {
+      const ticket = await generateTicket(tableNumber, roundIds, method)
+      
+      await loadTableRounds()
+      setShowPaymentModal(false)
+      setShowSelectivePayment(false)
+    } catch (err) {
+      setError('Error al cobrar la mesa')
+    }
+  }
+
+  const handleCancelPayment = () => setShowPaymentModal(false)
+
+  const toggleProductSelection = (roundId, productIndex) => {
+    setSelectedProducts(prev => {
+      const key = `${roundId}-${productIndex}`
+      if (prev.some(p => p.key === key)) return prev.filter(p => p.key !== key)
+      const prod = rounds.find(r => r._id === roundId).products[productIndex]
+      return [...prev, { key, roundId, productIndex, product: prod.product, quantity: prod.quantity, price: prod.product.price }]
+    })
+  }
+
+  const handleConfirmSelectivePayment = async (method = 'efectivo') => {
+    try {
+      const products = selectedProducts.map(item => ({ product: item.product._id, quantity: item.quantity }))
+      const newRound = await createRound(tableNumber, products)
+      
+      // Eliminar de las rondas originales
+      for (const item of selectedProducts) {
+        const round = rounds.find(r => r._id === item.roundId)
+        if (round) {
+          const updatedProducts = round.products.filter((_, idx) => idx !== item.productIndex)
+          if (updatedProducts.length === 0) {
+            await markRoundAsPaid(round._id)
+          } else {
+            await updateRoundProducts(round._id, updatedProducts.map(p => ({ product: p.product._id, quantity: p.quantity })))
+          }
+        }
+      }
+      // Cobrar la nueva ronda
+      await handleConfirmPayment([newRound._id], method)
+    } catch(err) {
+      setError('Error en cobro selectivo')
+    }
   }
 
   const handleCancel = () => {
@@ -153,84 +185,6 @@ function TableDetail() {
     }, 0)
   }
 
-  const handleSelectivePayment = () => {
-    setShowSelectivePayment(true)
-    setSelectedProducts([])
-  }
-
-  const toggleProductSelection = (roundId, productIndex) => {
-    setSelectedProducts(prev => {
-      const productKey = `${roundId}-${productIndex}`
-      const isSelected = prev.some(p => p.key === productKey)
-      
-      if (isSelected) {
-        return prev.filter(p => p.key !== productKey)
-      } else {
-        const round = rounds.find(r => r._id === roundId)
-        const product = round.products[productIndex]
-        return [...prev, {
-          key: productKey,
-          roundId,
-          productIndex,
-          product: product.product,
-          quantity: product.quantity,
-          price: product.product.price
-        }]
-      }
-    })
-  }
-
-  const calculateSelectedTotal = () => {
-    return selectedProducts.reduce((acc, item) => {
-      return acc + (item.price * item.quantity)
-    }, 0)
-  }
-
-  const handleConfirmSelectivePayment = async () => {
-    try {
-      // Crear una nueva ronda con los productos seleccionados
-      const products = selectedProducts.map(item => ({
-        product: item.product._id,
-        quantity: item.quantity
-      }))
-
-      // Crear la ronda y marcarla como pagada inmediatamente
-      const newRound = await createRound(tableNumber, products)
-      await markRoundAsPaid(newRound._id)
-
-      // Generar el ticket para esta ronda
-      const ticket = await generateTicket(tableNumber, [newRound._id])
-      setCurrentTicket(ticket)
-      setShowTicketModal(true)
-
-      // Eliminar los productos pagados de sus rondas originales
-      for (const item of selectedProducts) {
-        const round = rounds.find(r => r._id === item.roundId)
-        if (round) {
-          // Filtrar el producto específico de la ronda
-          const updatedProducts = round.products.filter((_, index) => index !== item.productIndex)
-          
-          if (updatedProducts.length === 0) {
-            // Si no quedan productos, marcar la ronda como pagada
-            await markRoundAsPaid(round._id)
-          } else {
-            // Actualizar la ronda con los productos restantes
-            await updateRoundProducts(round._id, updatedProducts.map(p => ({
-              product: p.product._id,
-              quantity: p.quantity
-            })))
-          }
-        }
-      }
-
-      await loadTableRounds()
-      setShowSelectivePayment(false)
-      setSelectedProducts([])
-    } catch (err) {
-      console.error('Error al procesar el pago selectivo:', err)
-      setError('Error al procesar el pago selectivo')
-    }
-  }
 
   const handleCleanTable = async () => {
     setCleaning(true)
@@ -403,12 +357,6 @@ function TableDetail() {
                           <span className="text-lg font-bold text-neutral-900">
                               ${roundTotal.toFixed(2)}
                             </span>
-                            <button
-                              onClick={() => handlePayment(round)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
-                            >
-                              Pagar Ronda
-                            </button>
                           </div>
                         </div>
                         <div className="space-y-2">
@@ -422,12 +370,22 @@ function TableDetail() {
                                   x{item.quantity}
                                 </span>
                               </div>
-                            <span className="font-medium text-neutral-900">
+                              <span className="font-medium text-neutral-900">
                                 ${((item.product?.price || 0) * item.quantity).toFixed(2)}
                               </span>
                             </div>
                           ))}
                         </div>
+                        {(user?.role === 'barra' || user?.role === 'admin') && (
+                          <div className="mt-4 flex justify-end">
+                            <button
+                               onClick={() => handleConfirmPayment([round._id], 'efectivo')}
+                               className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+                            >
+                               Cobrar Ronda M.
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -441,21 +399,34 @@ function TableDetail() {
                   <span className="text-2xl font-bold text-green-700">
                       ${total.toFixed(2)}
                     </span>
-                    <button
-                      onClick={() => handlePayment()}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
-                    >
-                      Pagar Todo
-                    </button>
+                    {(user?.role === 'barra' || user?.role === 'admin') && (
+                      <button
+                        onClick={() => setShowPaymentModal(true)}
+                        className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
+                      >
+                        Cerrar y Cobrar
+                      </button>
+                    )}
                 </div>
               </div>
               <div className="flex flex-wrap justify-end gap-4">
-                <button
-                  onClick={handleSelectivePayment}
-                  className="px-6 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold shadow-sm border border-green-200"
-                >
-                  Cobro Selectivo
-                </button>
+                {(user?.role === 'barra' || user?.role === 'admin') && (
+                  <>
+                    <button
+                      onClick={handlePrintPreTicket}
+                      disabled={isPrinting}
+                      className="px-6 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-semibold shadow-sm border border-blue-200"
+                    >
+                      {isPrinting ? 'Imprimiendo...' : 'Imprimir Cuenta'}
+                    </button>
+                    <button
+                      onClick={() => { setShowSelectivePayment(true); setSelectedProducts([]); }}
+                      className="px-6 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold shadow-sm border border-green-200"
+                    >
+                      Cobro Selectivo
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={handleAddRound}
                   className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
@@ -484,148 +455,53 @@ function TableDetail() {
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">Confirmar Pago</h2>
-            <p className="text-gray-600 mb-6">
-              {selectedRoundForPayment ? (
-                <>
-                  Total de la ronda {rounds.indexOf(selectedRoundForPayment) + 1}:{' '}
-                  <span className="font-bold text-xl">
-                    ${calculateRoundTotal(selectedRoundForPayment).toFixed(2)}
-                  </span>
-                </>
-              ) : (
-                <>
-                  Total a pagar: <span className="font-bold text-xl">${total.toFixed(2)}</span>
-                </>
-              )}
-            </p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={handleCancelPayment}
-                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmPayment}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Confirmar Pago
-              </button>
+            <h2 className="text-2xl font-bold mb-4">Confirmar Cobro de Mesa</h2>
+            <p className="text-gray-600 mb-6">Total a cobrar: <span className="font-bold text-xl">${total.toFixed(2)}</span></p>
+            <div className="flex justify-end gap-4">
+              <button onClick={handleCancelPayment} className="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
+              <button onClick={() => handleConfirmPayment(rounds.map(r=>r._id), 'tarjeta')} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Tarjeta</button>
+              <button onClick={() => handleConfirmPayment(rounds.map(r=>r._id), 'efectivo')} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Efectivo</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de cobro selectivo */}
       {showSelectivePayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-            <h2 className="text-2xl font-bold mb-4">Cobro Selectivo</h2>
+            <h2 className="text-2xl font-bold mb-4">Cobro Selectivo (Parcial)</h2>
             <div className="flex-1 overflow-y-auto mb-4">
-              <div className="space-y-4">
-                {rounds.map((round, roundIndex) => (
-                  <div key={round._id} className="border rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-2">Ronda {roundIndex + 1}</h3>
-                    <div className="space-y-2">
-                      {round.products.map((item, index) => {
-                        const productKey = `${round._id}-${index}`
-                        const isSelected = selectedProducts.some(p => p.key === productKey)
-                        return (
-                          <div
-                            key={index}
-                            onClick={() => toggleProductSelection(round._id, index)}
-                            className={`flex justify-between items-center p-2 rounded cursor-pointer transition-colors ${
-                              isSelected ? 'bg-purple-100 border-2 border-purple-500' : 'bg-slate-50 hover:bg-slate-100'
-                            }`}
-                          >
-                            <div className="flex items-center space-x-2">
-                              <span className="text-gray-700">
-                                {item.product?.name || 'Producto no disponible'}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                x{item.quantity}
-                              </span>
-                            </div>
-                            <span className="font-medium text-gray-800">
-                              ${((item.product?.price || 0) * item.quantity).toFixed(2)}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
+              {rounds.map((round) => (
+                <div key={round._id} className="border rounded-lg p-4 mb-2">
+                  <div className="space-y-2">
+                    {round.products.map((item, index) => {
+                      const key = `${round._id}-${index}`
+                      const isSelected = selectedProducts.some(p => p.key === key)
+                      return (
+                        <div key={index} onClick={() => toggleProductSelection(round._id, index)} className={`flex justify-between items-center p-2 rounded cursor-pointer ${isSelected ? 'bg-purple-100 border-2' : 'bg-slate-50'}`}>
+                          <span>{item.product?.name} x{item.quantity}</span>
+                          <span>${(item.quantity * (item.product?.price || 0)).toFixed(2)}</span>
+                        </div>
+                      )
+                    })}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-xl font-semibold">Total seleccionado:</span>
-                <span className="text-2xl font-bold text-purple-600">
-                  ${calculateSelectedTotal().toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={() => {
-                    setShowSelectivePayment(false)
-                    setSelectedProducts([])
-                  }}
-                  className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleConfirmSelectivePayment}
-                  disabled={selectedProducts.length === 0}
-                  className={`px-6 py-3 bg-purple-600 text-white rounded-lg transition-colors ${
-                    selectedProducts.length === 0
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-purple-700'
-                  }`}
-                >
-                  Confirmar Cobro
-                </button>
+            <div className="border-t pt-4 flex justify-between items-center">
+              <span className="text-xl">Total seleccionado: ${selectedProducts.reduce((a,b)=>a+(b.price*b.quantity),0).toFixed(2)}</span>
+              <div className="flex gap-2">
+                <button onClick={() => setShowSelectivePayment(false)} className="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
+                <button onClick={() => handleConfirmSelectivePayment('tarjeta')} disabled={!selectedProducts.length} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Tarjeta</button>
+                <button onClick={() => handleConfirmSelectivePayment('efectivo')} disabled={!selectedProducts.length} className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50">Efectivo</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de confirmación para generar ticket */}
-      {showTicketConfirm && currentTicket && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-            <h2 className="text-2xl font-bold mb-4 text-green-900">¿Generar ticket?</h2>
-            <p className="mb-6 text-green-700">¿Quieres imprimir el ticket para el cliente?</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => { setShowTicketConfirm(false); setShowTicketModal(true); }}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
-              >
-                Generar Ticket
-              </button>
-              <button
-                onClick={() => { setShowTicketConfirm(false); setCurrentTicket(null); }}
-                className="px-6 py-3 bg-neutral-200 text-green-900 rounded-lg hover:bg-neutral-300 transition-colors font-semibold"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals de tickets por navegador eliminados por el uso de Print Bridge local */}
 
-      {/* Modal del ticket */}
-      {showTicketModal && currentTicket && (
-        <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
-          <TicketView
-            ticket={currentTicket}
-            onClose={() => setShowTicketModal(false)}
-            autoPrint={true}
-          />
-        </div>
-      )}
 
       {/* Modal de confirmación para limpiar mesa */}
       {showCleanConfirm && (

@@ -8,6 +8,8 @@ import softDrinkRoutes from './softDrinkRoutes.js'
 import accountingRoutes from './accountingRoutes.js'
 import ticketRoutes from './ticketRoutes.js'
 import iceCreamRoutes from './iceCreamRoutes.js'
+import printerRoutes from './printerRoutes.js'
+import expenseRoutes from './expenses.js'
 
 const router = express.Router()
 
@@ -20,5 +22,7 @@ router.use('/refrescos', softDrinkRoutes)
 router.use('/accounting', accountingRoutes)
 router.use('/tickets', ticketRoutes)
 router.use('/icecreams', iceCreamRoutes)
+router.use('/printer', printerRoutes)
+router.use('/expenses', expenseRoutes)
 
 export default router 

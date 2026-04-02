@@ -61,7 +61,7 @@ const Accounting = () => {
     try {
       setIsResetting(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('https://camarerio.onrender.com/api/accounting/reset-daily', {
+      const response = await fetch(`$${import.meta.env.VITE_API_URL?.includes("/api") ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + "/api" : "https://camarerio.onrender.com/api")}/accounting/reset-daily`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,6 +80,21 @@ const Accounting = () => {
     } finally {
       setIsResetting(false);
     }
+  };
+
+  const getProductStats = (rounds) => {
+    if (!rounds) return [];
+    const counts = {};
+    rounds.forEach(r => {
+      if (!r.products) return;
+      r.products.forEach(p => {
+        const name = p.product?.name || p.name || 'Desconocido';
+        if (!counts[name]) counts[name] = { qty: 0, rev: 0 };
+        counts[name].qty += p.quantity;
+        counts[name].rev += p.quantity * (p.product?.price || p.price || 0);
+      });
+    });
+    return Object.entries(counts).sort((a,b) => b[1].qty - a[1].qty);
   };
 
   const formatCurrency = (amount) => {
@@ -143,6 +158,39 @@ const Accounting = () => {
           </div>
         </div>
       </div>
+
+      {/* Tarjeta de Estadísticas de Productos */}
+      <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6 md:mb-8">
+        <h2 className="text-lg md:text-xl font-semibold text-green-900 mb-4">
+          Productos Vendidos ({selectedMonth ? `Mes: ${selectedMonth.month}/${selectedMonth.year}` : 'Hoy'})
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm md:text-base border-collapse">
+            <thead>
+              <tr className="border-b-2 border-green-100 text-green-800">
+                <th className="py-2 px-4">Producto</th>
+                <th className="py-2 px-4 text-center">Cantidad</th>
+                <th className="py-2 px-4 text-right">Ingresos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {getProductStats(selectedMonth ? monthlyStats?.rounds : dailyStats?.rounds).map(([name, data]) => (
+                <tr key={name} className="border-b border-green-50 hover:bg-green-50">
+                  <td className="py-2 px-4 font-medium text-green-900">{name}</td>
+                  <td className="py-2 px-4 text-center font-bold text-green-700">{data.qty}</td>
+                  <td className="py-2 px-4 text-right text-green-800">{formatCurrency(data.rev)}</td>
+                </tr>
+              ))}
+              {getProductStats(selectedMonth ? monthlyStats?.rounds : dailyStats?.rounds).length === 0 && (
+                <tr>
+                  <td colSpan="3" className="py-4 text-center text-green-500">No hay ventas registradas en este periodo.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Historial de meses */}
       <div className="mb-6 md:mb-8">
         <h2 className="text-base md:text-lg font-bold text-green-900 mb-2 md:mb-4">Historial de meses</h2>

@@ -11,7 +11,10 @@ const Inventory = () => {
     name: '',
     price: '',
     image: null,
-    category: 'Otros'
+    category: 'Otros',
+    stock: 0,
+    isTracked: false,
+    alertThreshold: 0
   });
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showCombinados, setShowCombinados] = useState(false);
@@ -92,7 +95,10 @@ const Inventory = () => {
         name: product.name,
         price: product.price,
         image: null,
-        category: product.category || 'Otros'
+        category: product.category || 'Otros',
+        stock: product.stock || 0,
+        isTracked: product.isTracked || false,
+        alertThreshold: product.alertThreshold || 0
       });
       setPreviewUrl(product.imageUrl);
     } else {
@@ -101,7 +107,10 @@ const Inventory = () => {
         name: '',
         price: '',
         image: null,
-        category: 'Otros'
+        category: 'Otros',
+        stock: 0,
+        isTracked: false,
+        alertThreshold: 0
       });
       setPreviewUrl(null);
     }
@@ -115,7 +124,10 @@ const Inventory = () => {
       name: '',
       price: '',
       image: null,
-      category: 'Otros'
+      category: 'Otros',
+      stock: 0,
+      isTracked: false,
+      alertThreshold: 0
     });
     setPreviewUrl(null);
   };
@@ -135,6 +147,9 @@ const Inventory = () => {
       formDataToSend.append('name', formData.name);
       formDataToSend.append('price', formData.price);
       formDataToSend.append('category', formData.category);
+      formDataToSend.append('stock', formData.stock);
+      formDataToSend.append('isTracked', formData.isTracked);
+      formDataToSend.append('alertThreshold', formData.alertThreshold);
       if (formData.image) {
         formDataToSend.append('image', formData.image);
       }
@@ -313,6 +328,11 @@ const Inventory = () => {
                       currency: 'EUR'
                     }).format(product.price)}
                   </p>
+                  {product.isTracked && (
+                    <p className={`text-xs font-bold mb-1 p-1 rounded ${product.stock <= product.alertThreshold ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                      Stock: {product.stock} {product.stock <= product.alertThreshold && '(¡Bajo!)'}
+                    </p>
+                  )}
                   <div className="flex justify-between items-center mb-1 md:mb-2">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${product.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {product.available ? 'Disponible' : 'No disponible'}
@@ -462,6 +482,46 @@ const Inventory = () => {
                   ))}
                 </select>
               </div>
+
+              <div className="flex space-x-4">
+                <div className="flex-1">
+                  <label className="flex items-center space-x-2 text-green-900 font-medium mb-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.isTracked}
+                      onChange={e => setFormData(prev => ({ ...prev, isTracked: e.target.checked }))}
+                      className="rounded text-green-600 focus:ring-green-500"
+                    />
+                    <span>Controlar Stock</span>
+                  </label>
+                </div>
+              </div>
+              
+              {formData.isTracked && (
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <label className="block text-green-900 font-medium mb-2">Stock Actual</label>
+                    <input
+                      type="number"
+                      value={formData.stock}
+                      onChange={e => setFormData(prev => ({ ...prev, stock: Number(e.target.value) }))}
+                      className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 bg-green-50"
+                      min="0"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-green-900 font-medium mb-2">Aviso Bajo Stock</label>
+                    <input
+                      type="number"
+                      value={formData.alertThreshold}
+                      onChange={e => setFormData(prev => ({ ...prev, alertThreshold: Number(e.target.value) }))}
+                      className="w-full border border-green-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 bg-green-50"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-green-900 font-medium mb-2">Imagen</label>
                 <input

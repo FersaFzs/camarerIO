@@ -1,4 +1,4 @@
-const API_URL = 'https://camarerio.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://camarerio.onrender.com/api';
 
 export const getDailyStats = async () => {
   try {

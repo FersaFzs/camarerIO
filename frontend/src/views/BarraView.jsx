@@ -5,7 +5,7 @@ import { getActiveRounds } from '../services/productService';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 
-const SOCKET_URL = 'https://camarerio.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://camarerio.onrender.com';
 
 export default function BarraView() {
   // Hooks siempre al inicio
@@ -316,8 +316,9 @@ export default function BarraView() {
         </button>
       </div>
       {/* Layout de mesas */}
-      <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px]" style={{ height: '700px' }}>
-        {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map((table, i) => {
+      <div className="w-full overflow-auto">
+        <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px] min-w-[1200px]" style={{ height: '700px' }}>
+          {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map((table, i) => {
           const { isOccupied, isServing } = getMesaStatus(table);
           const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;
           const isDragging = dragInfo && dragInfo.id === table._id;
@@ -385,6 +386,7 @@ export default function BarraView() {
             {successMessage}
           </div>
         )}
+      </div>
       </div>
       {/* Modal de comanda o mesa vacía */}
       {showOrderModal && selectedTable && (

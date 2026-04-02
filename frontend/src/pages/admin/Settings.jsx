@@ -30,7 +30,7 @@ function Settings() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('https://camarerio.onrender.com/api/auth/users', {
+      const res = await fetch(`$${import.meta.env.VITE_API_URL?.includes("/api") ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + "/api" : "https://camarerio.onrender.com/api")}/auth/users`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       })
       if (!res.ok) throw new Error('Error al obtener usuarios')
@@ -97,7 +97,7 @@ function Settings() {
     setErrorApp(null);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://camarerio.onrender.com/api/accounting/reset-daily', {
+      const response = await fetch(`$${import.meta.env.VITE_API_URL?.includes("/api") ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + "/api" : "https://camarerio.onrender.com/api")}/accounting/reset-daily`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ function Settings() {
     setErrorApp(null);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://camarerio.onrender.com/api/accounting/reset-total', {
+      const response = await fetch(`$${import.meta.env.VITE_API_URL?.includes("/api") ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + "/api" : "https://camarerio.onrender.com/api")}/accounting/reset-total`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

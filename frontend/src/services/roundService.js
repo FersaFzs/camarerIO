@@ -1,4 +1,4 @@
-const API_URL = 'https://camarerio.onrender.com/api'
+const API_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://camarerio.onrender.com/api';
 
 const authHeader = () => ({
   'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -339,8 +339,8 @@ export const getTicket = async (ticketId) => {
 };
 
 export const updateCustomTable = async (tableId, data) => {
-  const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com';
-  const res = await fetch(`${API_URL}/api/tables/${tableId}`, {
+const API_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://camarerio.onrender.com/api';
+  const res = await fetch(`${API_URL}/tables/${tableId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
@@ -352,8 +352,8 @@ export const updateCustomTable = async (tableId, data) => {
 }; 
 
 export const updateTablePosition = async (tableId, x, y) => {
-  const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com';
-  const res = await fetch(`${API_URL}/api/tables/${tableId}/position`, {
+const API_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://camarerio.onrender.com/api';
+  const res = await fetch(`${API_URL}/tables/${tableId}/position`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'

@@ -3,19 +3,19 @@ import { getProducts, createProduct } from '../services/roundService';
 import '../mesas-modern.css'
 import io from 'socket.io-client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://camarerio.onrender.com';
-const SOCKET_URL = 'https://camarerio.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://camarerio.onrender.com/api';
+const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://camarerio.onrender.com';
 
 async function fetchLiqueurs() {
-  const res = await fetch(`${API_URL}/api/licores`);
+  const res = await fetch(`${API_URL}/licores`);
   return await res.json();
 }
 async function fetchSoftDrinks() {
-  const res = await fetch(`${API_URL}/api/refrescos`);
+  const res = await fetch(`${API_URL}/refrescos`);
   return await res.json();
 }
 async function fetchIceCreams() {
-  const res = await fetch(`${API_URL}/api/icecreams`);
+  const res = await fetch(`${API_URL}/icecreams`);
   return await res.json();
 }
 

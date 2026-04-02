@@ -31,7 +31,8 @@ export const getDailyStats = async (req, res) => {
     res.status(200).json({
       total,
       roundCount,
-      date: today
+      date: today,
+      rounds: dailyRounds
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
