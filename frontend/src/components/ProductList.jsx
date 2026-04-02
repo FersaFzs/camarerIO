@@ -85,7 +85,7 @@ function ProductList({ onAddProducts, onCancel }) {
     fetchIceCreams().then(setIceCreamFlavors);
 
     // Socket para productos
-    const socket = io(SOCKET_URL);
+    const socket = io(SOCKET_URL, { transports: ['polling'] });
     socket.on('products:update', () => {
       loadProducts();
     });

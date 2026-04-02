@@ -79,7 +79,7 @@ function Mesas() {
     loadCustomTables()
 
     // Socket.IO para tiempo real
-    const socket = io(SOCKET_URL)
+    const socket = io(SOCKET_URL, { transports: ['polling'] })
     socket.on('rounds:update', () => {
       loadTableStatuses()
       loadCustomTables()

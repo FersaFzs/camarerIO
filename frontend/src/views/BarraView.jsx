@@ -245,7 +245,7 @@ export default function BarraView() {
   // Cargar datos y conectar socket
   useEffect(() => {
     loadData(true); // Primera carga: mostrar spinner
-    const socket = io(SOCKET_URL);
+    const socket = io(SOCKET_URL, { transports: ['polling'] });
     socket.on('rounds:update', () => {
       loadData(false); // Actualización por socket: NO mostrar spinner
     });

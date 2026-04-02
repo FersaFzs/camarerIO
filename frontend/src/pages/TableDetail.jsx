@@ -48,7 +48,7 @@ function TableDetail() {
   useEffect(() => {
     loadTableRounds()
     // Socket.IO para tiempo real
-    const socket = io(SOCKET_URL)
+    const socket = io(SOCKET_URL, { transports: ['polling'] })
     socket.on('rounds:update', (data) => {
       // Solo recargar si es la mesa actual
       if (!data.tableNumber || data.tableNumber == tableNumber) {
