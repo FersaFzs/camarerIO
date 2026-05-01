@@ -23,6 +23,7 @@ export default function BarraView() {
   const [dragInfo, setDragInfo] = useState(null); // { id, offsetX, offsetY }
   const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState(null);
+  const [zoom, setZoom] = useState(1);
 
   // Helper para guardar posición de cualquier mesa
   const saveTablePosition = async (table, x, y) => {
@@ -252,6 +253,38 @@ export default function BarraView() {
     socket.on('tables:update', () => {
       loadData(false);
     });
+
+    // Escuchar eventos de impresión y enviarlos a la tablet Android (RawBT)
+    socket.on('print-job', (data) => {
+      try {
+        let escpos = "\x1B\x40"; // Initialize printer
+        
+        if (data.type === 'ticket' && data.text) {
+          // Normalizar para quitar acentos y evitar errores en btoa() con caracteres fuera de Latin1
+          let safeText = data.text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          escpos += safeText;
+          escpos += "\n\n\n\n\n\n\x1D\x56\x00"; // Cut paper
+          escpos += "\x1B\x70\x00\x19\xFA"; // Open drawer
+        } else if (data.type === 'drawer') {
+          escpos += "\x1B\x70\x00\x19\xFA"; // Open drawer only
+        }
+
+        // Reemplazar caracteres especiales (si queda alguno > 255) por interrogación para no crashear btoa
+        escpos = escpos.replace(/[^\x00-\xFF]/g, "?");
+        const base64Data = btoa(escpos);
+        
+        // Lanzar intent de RawBT invisible
+        const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = intentUrl;
+        document.body.appendChild(iframe);
+        setTimeout(() => document.body.removeChild(iframe), 2000);
+        console.log('Intent RawBT lanzado:', data.type);
+      } catch (err) {
+        console.error('Error al lanzar RawBT intent:', err);
+      }
+    });
     return () => {
       socket.disconnect();
     };
@@ -307,7 +340,14 @@ export default function BarraView() {
     <div className="min-h-screen bg-white flex flex-col font-inter">
       {/* Header */}
       <div className="w-full flex items-center justify-between h-20 px-10 bg-white border-b border-green-200 shadow-sm sticky top-0 left-0 z-50">
-        <h1 className="text-3xl font-extrabold text-green-800 tracking-tight">Comandas</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-extrabold text-green-800 tracking-tight">Comandas</h1>
+          <div className="flex bg-neutral-100 rounded-lg overflow-hidden border border-neutral-200 ml-4">
+            <button className="px-3 py-1 text-green-800 hover:bg-neutral-200 font-bold" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
+            <span className="px-3 py-1 text-sm font-semibold flex items-center bg-white border-x border-neutral-200">{Math.round(zoom * 100)}%</span>
+            <button className="px-3 py-1 text-green-800 hover:bg-neutral-200 font-bold" onClick={() => setZoom(z => Math.min(2, z + 0.1))}>+</button>
+          </div>
+        </div>
         <button
           className={`px-4 py-2 rounded-lg font-semibold ml-4 ${editLayout ? 'bg-green-600 text-white' : 'bg-neutral-200 text-green-900'}`}
           onClick={() => setEditLayout(v => !v)}
@@ -317,7 +357,7 @@ export default function BarraView() {
       </div>
       {/* Layout de mesas */}
       <div className="w-full overflow-auto">
-        <div ref={areaRef} className="w-full max-w-7xl mx-auto px-4 py-10 relative min-h-[700px] min-w-[1200px]" style={{ height: '700px' }}>
+        <div ref={areaRef} className="mx-auto px-4 py-10 relative" style={{ height: '700px', width: '1200px', transform: `scale(${zoom})`, transformOrigin: 'top center' }}>
           {tables.filter(table => typeof table.number !== 'undefined' && table.number !== null).map((table, i) => {
           const { isOccupied, isServing } = getMesaStatus(table);
           const hasOrder = orders[table.number?.toString?.()] && orders[table.number?.toString?.()].length > 0;

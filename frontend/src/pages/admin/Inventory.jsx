@@ -14,7 +14,9 @@ const Inventory = () => {
     category: 'Otros',
     stock: 0,
     isTracked: false,
-    alertThreshold: 0
+    alertThreshold: 0,
+    sortOrder: 0,
+    imageUrlFromWand: null
   });
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showCombinados, setShowCombinados] = useState(false);
@@ -98,7 +100,9 @@ const Inventory = () => {
         category: product.category || 'Otros',
         stock: product.stock || 0,
         isTracked: product.isTracked || false,
-        alertThreshold: product.alertThreshold || 0
+        alertThreshold: product.alertThreshold || 0,
+        sortOrder: product.sortOrder || 0,
+        imageUrlFromWand: null
       });
       setPreviewUrl(product.imageUrl);
     } else {
@@ -110,7 +114,9 @@ const Inventory = () => {
         category: 'Otros',
         stock: 0,
         isTracked: false,
-        alertThreshold: 0
+        alertThreshold: 0,
+        sortOrder: 0,
+        imageUrlFromWand: null
       });
       setPreviewUrl(null);
     }
@@ -127,7 +133,9 @@ const Inventory = () => {
       category: 'Otros',
       stock: 0,
       isTracked: false,
-      alertThreshold: 0
+      alertThreshold: 0,
+      sortOrder: 0,
+      imageUrlFromWand: null
     });
     setPreviewUrl(null);
   };
@@ -150,8 +158,11 @@ const Inventory = () => {
       formDataToSend.append('stock', formData.stock);
       formDataToSend.append('isTracked', formData.isTracked);
       formDataToSend.append('alertThreshold', formData.alertThreshold);
+      formDataToSend.append('sortOrder', formData.sortOrder);
       if (formData.image) {
         formDataToSend.append('image', formData.image);
+      } else if (formData.imageUrlFromWand) {
+        formDataToSend.append('imageUrl', formData.imageUrlFromWand);
       }
 
       if (editingProduct) {
@@ -189,6 +200,41 @@ const Inventory = () => {
     } catch (err) {
       setError('Error al cambiar la disponibilidad');
       console.error(err);
+    }
+  };
+
+  const handleUpdateSortOrder = async (product, change) => {
+    try {
+      const newSortOrder = (product.sortOrder || 0) + change;
+      const formDataToSend = new FormData();
+      formDataToSend.append('sortOrder', newSortOrder);
+      await updateProduct(product._id, formDataToSend);
+      await loadProducts();
+    } catch (err) {
+      setError('Error al actualizar el orden');
+    }
+  };
+
+  const autoFetchImage = async () => {
+    if (!formData.name) {
+      alert('Introduce un nombre de producto primero.');
+      return;
+    }
+    try {
+      const q = encodeURIComponent(formData.name + ' drink food');
+      const res = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${q}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url`);
+      const data = await res.json();
+      const pages = data.query?.pages;
+      if (pages) {
+        const pageId = Object.keys(pages)[0];
+        const imageUrl = pages[pageId].imageinfo[0].url;
+        setPreviewUrl(imageUrl);
+        setFormData(prev => ({ ...prev, imageUrlFromWand: imageUrl, image: null }));
+      } else {
+        alert('No se ha encontrado ninguna foto automática. Prueba con otro nombre.');
+      }
+    } catch (err) {
+      alert('Error de conexión buscando foto.');
     }
   };
 
@@ -271,7 +317,7 @@ const Inventory = () => {
   // Agrupar productos por categoría
   const productsByCategory = categoryOptions.map(cat => ({
     category: cat,
-    products: products.filter(p => p.category === cat)
+    products: products.filter(p => p.category === cat).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
   })).filter(group => group.products.length > 0);
 
   if (loading) {
@@ -343,6 +389,13 @@ const Inventory = () => {
                     >
                       {product.available ? 'No disponible' : 'Disponible'}
                     </button>
+                  </div>
+                  <div className="flex justify-between items-center mb-1 bg-neutral-50 p-1 rounded">
+                    <span className="text-xs text-neutral-500">Orden: {product.sortOrder || 0}</span>
+                    <div className="flex space-x-1">
+                      <button onClick={() => handleUpdateSortOrder(product, -1)} className="px-2 py-1 bg-neutral-200 hover:bg-neutral-300 rounded text-xs font-bold">↑</button>
+                      <button onClick={() => handleUpdateSortOrder(product, 1)} className="px-2 py-1 bg-neutral-200 hover:bg-neutral-300 rounded text-xs font-bold">↓</button>
+                    </div>
                   </div>
                   <div className="flex justify-end space-x-2">
                     <button
@@ -523,7 +576,16 @@ const Inventory = () => {
               )}
 
               <div>
-                <label className="block text-green-900 font-medium mb-2">Imagen</label>
+                <div className="flex justify-between items-end mb-2">
+                  <label className="block text-green-900 font-medium">Imagen</label>
+                  <button 
+                    type="button" 
+                    onClick={autoFetchImage}
+                    className="text-xs px-3 py-1 bg-purple-100 text-purple-700 font-bold rounded-full hover:bg-purple-200 flex items-center gap-1 transition-colors"
+                  >
+                    ✨ Varita Mágica (Auto-Foto)
+                  </button>
+                </div>
                 <input
                   type="file"
                   accept="image/*"

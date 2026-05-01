@@ -2,7 +2,7 @@ import Product from '../models/Product.js';
 
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().sort({ sortOrder: 1, name: 1 });
     res.json(products);
   } catch (error) {
     console.error('Error al obtener productos:', error);
@@ -14,8 +14,8 @@ export const createProduct = async (req, res) => {
   try {
     console.log('BODY:', req.body);
     console.log('FILE:', req.file);
-    const { name, price, category } = req.body;
-    const imageUrl = req.file ? req.file.path : null;
+    const { name, price, category, imageUrl: bodyImageUrl } = req.body;
+    const imageUrl = req.file ? req.file.path : bodyImageUrl || null;
 
     if (!category) {
       return res.status(400).json({ message: 'La categoría es obligatoria' });
@@ -42,15 +42,15 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, category } = req.body;
-    const imageUrl = req.file ? req.file.path : undefined;
+    const { name, price, category, sortOrder, imageUrl: bodyImageUrl } = req.body;
+    const imageUrl = req.file ? req.file.path : bodyImageUrl || undefined;
 
-    const updateData = { 
-      name, 
-      price: parseFloat(price)
-    };
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (price !== undefined) updateData.price = parseFloat(price);
     if (category) updateData.category = category;
     if (imageUrl) updateData.imageUrl = imageUrl;
+    if (sortOrder !== undefined && sortOrder !== null) updateData.sortOrder = parseInt(sortOrder);
 
     const product = await Product.findByIdAndUpdate(
       id,

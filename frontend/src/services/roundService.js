@@ -295,7 +295,7 @@ export const deleteCustomTable = async (tableId) => {
   }
 }
 
-export const generateTicket = async (tableNumber, roundIds, paymentMethod = 'efectivo') => {
+export const generateTicket = async (tableNumber, roundIds, paymentMethod = 'efectivo', skipPrint = false) => {
   try {
     const response = await fetch(`${API_URL}/tickets`, {
       method: 'POST',
@@ -306,7 +306,8 @@ export const generateTicket = async (tableNumber, roundIds, paymentMethod = 'efe
       body: JSON.stringify({
         tableNumber,
         roundIds,
-        paymentMethod
+        paymentMethod,
+        skipPrint
       })
     });
 

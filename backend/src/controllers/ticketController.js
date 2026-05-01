@@ -7,7 +7,7 @@ import crypto from 'crypto';
 
 export const generateTicket = async (req, res) => {
   try {
-    const { tableNumber, roundIds, paymentMethod } = req.body;
+    const { tableNumber, roundIds, paymentMethod, skipPrint } = req.body;
     
     // Obtener las rondas no pagadas correspondientes a los roundIds dados
     const rounds = await Round.find({
@@ -113,17 +113,19 @@ export const generateTicket = async (req, res) => {
       await Product.deleteMany({ _id: { $in: productIdsToDelete } });
     }
 
-    // Emitir el Ticket Legal y abrir cajón a través del puente
-    try {
-      const legalTicketText = PrinterService.generateLegalTicketString(invoice);
-      await PrinterService.printTicket(req.io, legalTicketText);
-      if (paymentMethod === 'efectivo') {
-        await PrinterService.openDrawer(req.io);
+    // Emitir el Ticket Legal y abrir cajón a través del puente (si no es cobro manual sin caja)
+    if (!skipPrint) {
+      try {
+        const legalTicketText = PrinterService.generateLegalTicketString(invoice);
+        await PrinterService.printTicket(req.io, legalTicketText);
+        if (paymentMethod === 'efectivo') {
+          await PrinterService.openDrawer(req.io);
+        }
+      } catch (printError) {
+        // Registramos el error de impresión pero no rompemos el flujo.
+        // La factura y las rondas ya están guardadas (no habrá duplicaciones).
+        console.error('Error al imprimir o abrir cajón (Hardware). Factura guardada.', printError.message);
       }
-    } catch (printError) {
-      // Registramos el error de impresión pero no rompemos el flujo.
-      // La factura y las rondas ya están guardadas (no habrá duplicaciones).
-      console.error('Error al imprimir o abrir cajón (Hardware). Factura guardada.', printError.message);
     }
 
     // Emitir websocket actualizando la mesa

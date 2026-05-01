@@ -34,6 +34,10 @@ const productSchema = new mongoose.Schema({
   alertThreshold: {
     type: Number,
     default: 0
+  },
+  sortOrder: {
+    type: Number,
+    default: 0
   }
 })
 

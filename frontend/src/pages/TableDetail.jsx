@@ -127,9 +127,9 @@ function TableDetail() {
     }
   }
 
-  const handleConfirmPayment = async (roundIds, method = 'efectivo') => {
+  const handleConfirmPayment = async (roundIds, method = 'efectivo', skipPrint = false) => {
     try {
-      const ticket = await generateTicket(tableNumber, roundIds, method)
+      const ticket = await generateTicket(tableNumber, roundIds, method, skipPrint)
       
       await loadTableRounds()
       setShowPaymentModal(false)
@@ -427,6 +427,18 @@ function TableDetail() {
                     </button>
                   </>
                 )}
+                {/* Botón de cobro silencioso disponible para todos, incluyendo camareros */}
+                <button
+                  onClick={() => {
+                    const allRoundIds = rounds.map(r => r._id);
+                    if(allRoundIds.length > 0) {
+                       handleConfirmPayment(allRoundIds, 'efectivo', true);
+                    }
+                  }}
+                  className="px-6 py-3 bg-neutral-100 text-neutral-700 border border-neutral-300 rounded-lg hover:bg-neutral-200 transition-colors font-semibold shadow-sm"
+                >
+                  Cobro Manual (Sin Caja)
+                </button>
                 <button
                   onClick={handleAddRound}
                   className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
