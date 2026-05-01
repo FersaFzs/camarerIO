@@ -43,6 +43,36 @@ export const connectWebUSB = async () => {
   }
 };
 
+export const autoConnectWebUSB = async () => {
+  if (!isWebUSBSupported()) return false;
+  try {
+    const devices = await navigator.usb.getDevices();
+    if (devices.length > 0) {
+      const device = devices[0];
+      await device.open();
+      if (device.configuration === null) {
+        await device.selectConfiguration(1);
+      }
+      
+      let interfaceNumber = 0;
+      for (const iface of device.configuration.interfaces) {
+        if (iface.alternate.interfaceClass === 7) {
+          interfaceNumber = iface.interfaceNumber;
+          break;
+        }
+      }
+
+      await device.claimInterface(interfaceNumber);
+      usbDevice = device;
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error autoconectando a WebUSB:', error);
+    return false;
+  }
+};
+
 export const getConnectedUSBDeviceName = () => {
   return usbDevice ? (usbDevice.productName || 'Impresora Genérica') : null;
 };

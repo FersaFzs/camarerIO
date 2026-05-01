@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import MesaBarra from '../components/MesaBarra';
 import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable, cleanTableRounds, markRoundAsPrepared, getTableRounds } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
-import { connectWebUSB, getConnectedUSBDeviceName, printWebUSB, isWebUSBSupported } from '../services/webusb';
+import { connectWebUSB, getConnectedUSBDeviceName, printWebUSB, isWebUSBSupported, autoConnectWebUSB } from '../services/webusb';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 
@@ -247,6 +247,15 @@ export default function BarraView() {
 
   // Cargar datos y conectar socket
   useEffect(() => {
+    // Autoconectar a la impresora si ya se dio permiso antes
+    const tryAutoConnect = async () => {
+      const reconnected = await autoConnectWebUSB();
+      if (reconnected) {
+        setUsbPrinterName(getConnectedUSBDeviceName());
+      }
+    };
+    tryAutoConnect();
+
     loadData(true); // Primera carga: mostrar spinner
     const socket = io(SOCKET_URL, { transports: ['polling'] });
     socket.on('rounds:update', () => {
