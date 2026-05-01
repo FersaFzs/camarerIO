@@ -2,7 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import MesaBarra from '../components/MesaBarra';
 import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable, cleanTableRounds, markRoundAsPrepared, getTableRounds } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
-import { connectWebUSB, getConnectedUSBDeviceName, printWebUSB, isWebUSBSupported, autoConnectWebUSB } from '../services/webusb';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,7 +24,6 @@ export default function BarraView() {
   const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState(null);
   const [zoom, setZoom] = useState(1);
-  const [usbPrinterName, setUsbPrinterName] = useState(null);
 
   // Helper para guardar posición de cualquier mesa
   const saveTablePosition = async (table, x, y) => {
@@ -247,10 +245,6 @@ export default function BarraView() {
 
   // Cargar datos y conectar socket
   useEffect(() => {
-    setTimeout(() => {
-      setUsbPrinterName(getConnectedUSBDeviceName());
-    }, 1000);
-
     loadData(true); // Primera carga: mostrar spinner
     const socket = io(SOCKET_URL, { transports: ['polling'] });
     socket.on('rounds:update', () => {
@@ -264,32 +258,6 @@ export default function BarraView() {
       socket.disconnect();
     };
   }, []);
-
-  // Función manual para vincular el USB
-  const handleConnectUSB = async () => {
-    if (!isWebUSBSupported()) {
-      setError('WebUSB no está soportado en este navegador.');
-      return;
-    }
-    try {
-      const success = await connectWebUSB();
-      if (success) {
-        setUsbPrinterName(getConnectedUSBDeviceName());
-        setSuccessMessage('Impresora vinculada correctamente');
-        setTimeout(() => setSuccessMessage(null), 3000);
-      }
-    } catch (err) {
-      if (err.name === 'NotFoundError') {
-        if (!usbPrinterName) {
-          setError('No se vinculó ninguna impresora.');
-          setTimeout(() => setError(null), 3000);
-        }
-      } else {
-        setError(err.message || 'Error desconocido al vincular USB');
-        setTimeout(() => setError(null), 6000);
-      }
-    }
-  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div></div>;
@@ -349,13 +317,6 @@ export default function BarraView() {
             <span className="px-3 py-1 text-sm font-semibold flex items-center bg-white border-x border-neutral-200">{Math.round(zoom * 100)}%</span>
             <button className="px-3 py-1 text-green-800 hover:bg-neutral-200 font-bold" onClick={() => setZoom(z => Math.min(2, z + 0.1))}>+</button>
           </div>
-          
-          <button
-            onClick={handleConnectUSB}
-            className={`px-4 py-2 rounded-lg font-semibold ml-4 shadow-sm border ${usbPrinterName ? 'bg-green-100 text-green-800 border-green-300' : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'}`}
-          >
-            {usbPrinterName ? `🖨️ ${usbPrinterName}` : '🔌 Vincular Impresora USB'}
-          </button>
         </div>
         <button
           className={`px-4 py-2 rounded-lg font-semibold ml-4 ${editLayout ? 'bg-green-600 text-white' : 'bg-neutral-200 text-green-900'}`}
