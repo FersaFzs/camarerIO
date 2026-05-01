@@ -34,9 +34,9 @@ const Inventory = () => {
   const categoryOptions = [
     'Cervezas',
     'Refrescos',
-    'Copas',
-    'Cafés',
     'Vinos',
+    'Cafés',
+    'Copas',
     'Helados',
     'Tapas',
     'Otros'

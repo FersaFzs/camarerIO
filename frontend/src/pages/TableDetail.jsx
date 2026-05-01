@@ -42,6 +42,7 @@ function TableDetail() {
   const [moveError, setMoveError] = useState(null)
   const [availableTables, setAvailableTables] = useState([])
   const [selectedTable, setSelectedTable] = useState('')
+  const [editingRoundId, setEditingRoundId] = useState(null)
 
   console.log('TableDetail - Número de mesa:', tableNumber)
 
@@ -83,6 +84,12 @@ function TableDetail() {
 
   const handleAddProducts = () => {
     setIsNewRound(false)
+    setEditingRoundId(null)
+    setShowProductList(true)
+  }
+
+  const handleEditRound = (round) => {
+    setEditingRoundId(round._id)
     setShowProductList(true)
   }
 
@@ -177,6 +184,7 @@ function TableDetail() {
   const handleCancel = () => {
     setShowProductList(false)
     setIsNewRound(false)
+    setEditingRoundId(null)
   }
 
   const calculateRoundTotal = (round) => {
@@ -376,14 +384,22 @@ function TableDetail() {
                             </div>
                           ))}
                         </div>
-                        {(user?.role === 'barra' || user?.role === 'admin') && (
-                          <div className="mt-4 flex justify-end">
+                        {(user?.role === 'barra' || user?.role === 'admin' || user?.role === 'camarero') && (
+                          <div className="mt-4 flex justify-end gap-2">
                             <button
-                               onClick={() => handleConfirmPayment([round._id], 'efectivo')}
-                               className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+                               onClick={() => handleEditRound(round)}
+                               className="px-4 py-2 bg-neutral-200 text-neutral-800 rounded-md text-sm hover:bg-neutral-300 font-semibold"
                             >
-                               Cobrar Ronda M.
+                               ✎ Editar Ronda
                             </button>
+                            {(user?.role === 'barra' || user?.role === 'admin') && (
+                              <button
+                                 onClick={() => handleConfirmPayment([round._id], 'efectivo')}
+                                 className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 font-semibold"
+                              >
+                                 Cobrar Ronda M.
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -461,6 +477,11 @@ function TableDetail() {
         <ProductList
           onAddProducts={handleProductsSelected}
           onCancel={handleCancel}
+          initialProducts={
+            editingRoundId 
+              ? rounds.find(r => r._id === editingRoundId)?.products 
+              : null
+          }
         />
       )}
 

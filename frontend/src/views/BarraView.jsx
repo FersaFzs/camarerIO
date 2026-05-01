@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import MesaBarra from '../components/MesaBarra';
 import { fetchCustomTables, fetchTableStatuses, updateTablePosition, createCustomTable, cleanTableRounds, markRoundAsPrepared, getTableRounds } from '../services/roundService';
 import { getActiveRounds } from '../services/productService';
+import { connectWebUSB, getConnectedUSBDeviceName, printWebUSB, isWebUSBSupported } from '../services/webusb';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,6 +25,7 @@ export default function BarraView() {
   const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState(null);
   const [zoom, setZoom] = useState(1);
+  const [usbPrinterName, setUsbPrinterName] = useState(null);
 
   // Helper para guardar posición de cualquier mesa
   const saveTablePosition = async (table, x, y) => {
@@ -254,60 +256,38 @@ export default function BarraView() {
       loadData(false);
     });
 
-    // Escuchar eventos de impresión y enviarlos a la tablet Android (RawBT)
-    socket.on('print-job', (data) => {
+    // Escuchar eventos de impresión y mandarlos por WebUSB Nativo
+    socket.on('print-job', async (data) => {
       try {
-        let escpos = "\x1B\x40"; // Initialize printer
-        
-        if (data.type === 'ticket' && data.text) {
-          // Normalizar para quitar acentos y evitar errores en btoa() con caracteres fuera de Latin1
-          let safeText = data.text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          escpos += safeText;
-          escpos += "\n\n\n\n\n\n\x1D\x56\x00"; // Cut paper
-          escpos += "\x1B\x70\x00\x19\xFA"; // Open drawer
-        } else if (data.type === 'drawer') {
-          escpos += "\x1B\x70\x00\x19\xFA"; // Open drawer only
-        }
-
-        // Reemplazar caracteres especiales (si queda alguno > 255) por interrogación
-        escpos = escpos.replace(/[^\x00-\xFF]/g, "?");
-        
-        // Convertir el string a ArrayBuffer (RawBT necesita los bytes crudos)
-        const bytes = new Uint8Array(escpos.length);
-        for (let i = 0; i < escpos.length; i++) {
-          bytes[i] = escpos.charCodeAt(i) & 0xFF;
-        }
-
-        // Primero intentamos por WebSocket local de RawBT (la opción más fiable para evitar bloqueos)
-        const wsRawBT = new WebSocket('ws://127.0.0.1:40213/');
-        
-        wsRawBT.onopen = () => {
-          wsRawBT.send(bytes);
-          wsRawBT.close();
-          console.log('Impreso vía RawBT WebSocket Local');
-          setSuccessMessage('Impreso correctamente (WS)');
-          setTimeout(() => setSuccessMessage(null), 2000);
-        };
-
-        wsRawBT.onerror = () => {
-          console.warn('Fallo WebSocket RawBT, probando Intent Url...');
-          // Si falla, intentamos mediante el Intent Url
-          const base64Data = btoa(escpos);
-          const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-          window.location.href = intentUrl;
-          
-          setSuccessMessage('Imprimiendo en RawBT (Intent)...');
-          setTimeout(() => setSuccessMessage(null), 2000);
-        };
-
+        await printWebUSB(data);
+        console.log('Impreso vía WebUSB Nativo');
+        setSuccessMessage('Impreso correctamente (WebUSB)');
+        setTimeout(() => setSuccessMessage(null), 2000);
       } catch (err) {
-        console.error('Error al lanzar RawBT intent:', err);
+        console.error('Error al imprimir por WebUSB:', err);
+        setError(err.message || 'Error al imprimir');
       }
     });
     return () => {
       socket.disconnect();
     };
   }, []);
+
+  // Función manual para vincular el USB
+  const handleConnectUSB = async () => {
+    if (!isWebUSBSupported()) {
+      setError('WebUSB no está soportado en este navegador. Usa Chrome para Android/PC.');
+      return;
+    }
+    const success = await connectWebUSB();
+    if (success) {
+      setUsbPrinterName(getConnectedUSBDeviceName());
+      setSuccessMessage('Impresora vinculada correctamente');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } else {
+      setError('No se pudo vincular la impresora USB');
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div></div>;
@@ -361,11 +341,19 @@ export default function BarraView() {
       <div className="w-full flex items-center justify-between h-20 px-10 bg-white border-b border-green-200 shadow-sm sticky top-0 left-0 z-50">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-extrabold text-green-800 tracking-tight">Comandas</h1>
+          
           <div className="flex bg-neutral-100 rounded-lg overflow-hidden border border-neutral-200 ml-4">
             <button className="px-3 py-1 text-green-800 hover:bg-neutral-200 font-bold" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
             <span className="px-3 py-1 text-sm font-semibold flex items-center bg-white border-x border-neutral-200">{Math.round(zoom * 100)}%</span>
             <button className="px-3 py-1 text-green-800 hover:bg-neutral-200 font-bold" onClick={() => setZoom(z => Math.min(2, z + 0.1))}>+</button>
           </div>
+          
+          <button
+            onClick={handleConnectUSB}
+            className={`px-4 py-2 rounded-lg font-semibold ml-4 shadow-sm border ${usbPrinterName ? 'bg-green-100 text-green-800 border-green-300' : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'}`}
+          >
+            {usbPrinterName ? `🖨️ ${usbPrinterName}` : '🔌 Vincular Impresora USB'}
+          </button>
         </div>
         <button
           className={`px-4 py-2 rounded-lg font-semibold ml-4 ${editLayout ? 'bg-green-600 text-white' : 'bg-neutral-200 text-green-900'}`}

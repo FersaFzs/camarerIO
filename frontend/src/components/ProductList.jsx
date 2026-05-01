@@ -19,7 +19,7 @@ async function fetchIceCreams() {
   return await res.json();
 }
 
-function ProductList({ onAddProducts, onCancel }) {
+function ProductList({ onAddProducts, onCancel, initialProducts }) {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,9 +42,9 @@ function ProductList({ onAddProducts, onCancel }) {
   const categoryOptions = [
     'Cervezas',
     'Refrescos', 
-    'Copas',
-    'Cafés',
     'Vinos',
+    'Cafés',
+    'Copas',
     'Helados',
     'Otros'
   ];
@@ -67,8 +67,30 @@ function ProductList({ onAddProducts, onCancel }) {
     const loadProducts = async () => {
       try {
         const productsData = await getProducts();
+        
+        // Ordenar globalmente por sortOrder (si existe) o dejar alfabético
+        productsData.sort((a, b) => {
+          if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+            return a.sortOrder - b.sortOrder;
+          }
+          return a.name.localeCompare(b.name);
+        });
+
         console.log('Productos recibidos:', productsData.map(p => ({ nombre: p.name, categoria: p.category })));
         setProducts(productsData);
+        
+        // Inicializar con initialProducts si existe (para modo edición)
+        if (initialProducts && initialProducts.length > 0) {
+          const initialMap = {};
+          initialProducts.forEach(item => {
+             const pid = item.product?._id || item.product;
+             if (pid) {
+               initialMap[pid] = (initialMap[pid] || 0) + item.quantity;
+             }
+          });
+          setSelectedProducts(initialMap);
+        }
+
         const cubata = productsData.find(p => p.name.toLowerCase() === 'cubata' && p.category === 'Copas');
         setCubataProduct(cubata || null);
       } catch (err) {
@@ -245,15 +267,27 @@ function ProductList({ onAddProducts, onCancel }) {
   };
 
   // Agrupar productos por categoría, excluyendo 'Tapas'
-  const groupedProducts = products.reduce((acc, product) => {
+  const groupedProducts = {};
+  // Inicializamos todas las categorías en el orden deseado para que aparezcan aunque estén vacías o simplemente el orden se respete
+  categoryOptions.forEach(cat => {
+    groupedProducts[cat] = [];
+  });
+
+  products.forEach((product) => {
     const cat = product.category || 'Otros';
-    if (cat === 'Tapas') return acc; // Omitir tapas
-    if (!acc[cat]) acc[cat] = [];
+    if (cat === 'Tapas') return; // Omitir tapas
+    if (!groupedProducts[cat]) groupedProducts[cat] = [];
     if (!(cat === 'Copas' && product.name.toLowerCase() === 'cubata')) {
-      acc[cat].push(product);
+      groupedProducts[cat].push(product);
     }
-    return acc;
-  }, {});
+  });
+
+  // Limpiar categorías vacías
+  Object.keys(groupedProducts).forEach(cat => {
+    if (groupedProducts[cat].length === 0) {
+      delete groupedProducts[cat];
+    }
+  });
 
   if (isLoading) {
     return (
