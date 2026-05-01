@@ -273,14 +273,13 @@ export default function BarraView() {
         escpos = escpos.replace(/[^\x00-\xFF]/g, "?");
         const base64Data = btoa(escpos);
         
-        // Lanzar intent de RawBT invisible
+        // Lanzar intent de RawBT cambiando la ubicación actual (los iframes bloquean intents en Android modernos)
         const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = intentUrl;
-        document.body.appendChild(iframe);
-        setTimeout(() => document.body.removeChild(iframe), 2000);
+        window.location.href = intentUrl;
+        
         console.log('Intent RawBT lanzado:', data.type);
+        setSuccessMessage('Imprimiendo en RawBT...');
+        setTimeout(() => setSuccessMessage(null), 2000);
       } catch (err) {
         console.error('Error al lanzar RawBT intent:', err);
       }
