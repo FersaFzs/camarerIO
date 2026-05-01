@@ -269,17 +269,37 @@ export default function BarraView() {
           escpos += "\x1B\x70\x00\x19\xFA"; // Open drawer only
         }
 
-        // Reemplazar caracteres especiales (si queda alguno > 255) por interrogación para no crashear btoa
+        // Reemplazar caracteres especiales (si queda alguno > 255) por interrogación
         escpos = escpos.replace(/[^\x00-\xFF]/g, "?");
-        const base64Data = btoa(escpos);
         
-        // Lanzar intent de RawBT cambiando la ubicación actual (los iframes bloquean intents en Android modernos)
-        const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-        window.location.href = intentUrl;
+        // Convertir el string a ArrayBuffer (RawBT necesita los bytes crudos)
+        const bytes = new Uint8Array(escpos.length);
+        for (let i = 0; i < escpos.length; i++) {
+          bytes[i] = escpos.charCodeAt(i) & 0xFF;
+        }
+
+        // Primero intentamos por WebSocket local de RawBT (la opción más fiable para evitar bloqueos)
+        const wsRawBT = new WebSocket('ws://127.0.0.1:40213/');
         
-        console.log('Intent RawBT lanzado:', data.type);
-        setSuccessMessage('Imprimiendo en RawBT...');
-        setTimeout(() => setSuccessMessage(null), 2000);
+        wsRawBT.onopen = () => {
+          wsRawBT.send(bytes);
+          wsRawBT.close();
+          console.log('Impreso vía RawBT WebSocket Local');
+          setSuccessMessage('Impreso correctamente (WS)');
+          setTimeout(() => setSuccessMessage(null), 2000);
+        };
+
+        wsRawBT.onerror = () => {
+          console.warn('Fallo WebSocket RawBT, probando Intent Url...');
+          // Si falla, intentamos mediante el Intent Url
+          const base64Data = btoa(escpos);
+          const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+          window.location.href = intentUrl;
+          
+          setSuccessMessage('Imprimiendo en RawBT (Intent)...');
+          setTimeout(() => setSuccessMessage(null), 2000);
+        };
+
       } catch (err) {
         console.error('Error al lanzar RawBT intent:', err);
       }
