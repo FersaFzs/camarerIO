@@ -38,8 +38,9 @@ export const connectWebUSB = async () => {
     usbDevice = device;
     return true;
   } catch (error) {
+    if (error.name === 'NotFoundError') throw error;
     console.error('Error conectando a WebUSB:', error);
-    return false;
+    throw new Error('Fallo al conectar: ' + error.message);
   }
 };
 

@@ -271,16 +271,22 @@ export default function BarraView() {
       setError('WebUSB no está soportado en este navegador.');
       return;
     }
-    const success = await connectWebUSB();
-    if (success) {
-      setUsbPrinterName(getConnectedUSBDeviceName());
-      setSuccessMessage('Impresora vinculada correctamente');
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } else {
-      // Ignoramos el error si ya había una vinculada (seguramente le dio a cancelar)
-      if (!usbPrinterName) {
-        setError('No se vinculó ninguna impresora.');
-        setTimeout(() => setError(null), 3000);
+    try {
+      const success = await connectWebUSB();
+      if (success) {
+        setUsbPrinterName(getConnectedUSBDeviceName());
+        setSuccessMessage('Impresora vinculada correctamente');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (err) {
+      if (err.name === 'NotFoundError') {
+        if (!usbPrinterName) {
+          setError('No se vinculó ninguna impresora.');
+          setTimeout(() => setError(null), 3000);
+        }
+      } else {
+        setError(err.message || 'Error desconocido al vincular USB');
+        setTimeout(() => setError(null), 6000);
       }
     }
   };

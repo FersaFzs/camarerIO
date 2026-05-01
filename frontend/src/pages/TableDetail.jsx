@@ -95,13 +95,18 @@ function TableDetail() {
 
   const handleProductsSelected = async (products) => {
     try {
-      await createRound(tableNumber, products)
+      if (editingRoundId) {
+        await updateRoundProducts(editingRoundId, products)
+      } else {
+        await createRound(tableNumber, products)
+      }
       await loadTableRounds()
       setShowProductList(false)
       setIsNewRound(false)
+      setEditingRoundId(null)
     } catch (err) {
-      console.error('Error al añadir productos:', err)
-      setError('Error al añadir productos')
+      console.error('Error al guardar productos:', err)
+      setError('Error al guardar productos')
     }
   }
 
