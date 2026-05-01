@@ -247,14 +247,9 @@ export default function BarraView() {
 
   // Cargar datos y conectar socket
   useEffect(() => {
-    // Autoconectar a la impresora si ya se dio permiso antes
-    const tryAutoConnect = async () => {
-      const reconnected = await autoConnectWebUSB();
-      if (reconnected) {
-        setUsbPrinterName(getConnectedUSBDeviceName());
-      }
-    };
-    tryAutoConnect();
+    setTimeout(() => {
+      setUsbPrinterName(getConnectedUSBDeviceName());
+    }, 1000);
 
     loadData(true); // Primera carga: mostrar spinner
     const socket = io(SOCKET_URL, { transports: ['polling'] });
@@ -265,18 +260,6 @@ export default function BarraView() {
       loadData(false);
     });
 
-    // Escuchar eventos de impresión y mandarlos por WebUSB Nativo
-    socket.on('print-job', async (data) => {
-      try {
-        await printWebUSB(data);
-        console.log('Impreso vía WebUSB Nativo');
-        setSuccessMessage('Impreso correctamente (WebUSB)');
-        setTimeout(() => setSuccessMessage(null), 2000);
-      } catch (err) {
-        console.error('Error al imprimir por WebUSB:', err);
-        setError(err.message || 'Error al imprimir');
-      }
-    });
     return () => {
       socket.disconnect();
     };
@@ -285,7 +268,7 @@ export default function BarraView() {
   // Función manual para vincular el USB
   const handleConnectUSB = async () => {
     if (!isWebUSBSupported()) {
-      setError('WebUSB no está soportado en este navegador. Usa Chrome para Android/PC.');
+      setError('WebUSB no está soportado en este navegador.');
       return;
     }
     const success = await connectWebUSB();
@@ -294,7 +277,11 @@ export default function BarraView() {
       setSuccessMessage('Impresora vinculada correctamente');
       setTimeout(() => setSuccessMessage(null), 3000);
     } else {
-      setError('No se pudo vincular la impresora USB');
+      // Ignoramos el error si ya había una vinculada (seguramente le dio a cancelar)
+      if (!usbPrinterName) {
+        setError('No se vinculó ninguna impresora.');
+        setTimeout(() => setError(null), 3000);
+      }
     }
   };
 

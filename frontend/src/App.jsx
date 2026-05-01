@@ -9,10 +9,13 @@ import Login from './pages/Login'
 import PrivateRoute from './components/PrivateRoute'
 import BarraView from './views/BarraView'
 import TableAdmin from './pages/admin/TableAdmin'
+import GlobalPrinter from './components/GlobalPrinter'
 
 function App() {
   return (
-    <Routes>
+    <>
+      <GlobalPrinter />
+      <Routes>
       <Route path="/" element={<Login />} />
       
       {/* Rutas protegidas para camareros */}
@@ -47,6 +50,7 @@ function App() {
         </PrivateRoute>
       } />
     </Routes>
+    </>
   )
 }
 
