@@ -8,6 +8,7 @@ import '../mesas-modern.css'
 import TicketView from '../components/TicketView'
 import io from 'socket.io-client'
 import AdvancedMenu from '../components/AdvancedMenu'
+import CashCalculatorModal from '../components/CashCalculatorModal'
 
 const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://camarerio.onrender.com';
 const API_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://camarerio.onrender.com/api';
@@ -43,6 +44,8 @@ function TableDetail() {
   const [availableTables, setAvailableTables] = useState([])
   const [selectedTable, setSelectedTable] = useState('')
   const [editingRoundId, setEditingRoundId] = useState(null)
+  const [showCashCalculator, setShowCashCalculator] = useState(false)
+  const [cashCalculatorAction, setCashCalculatorAction] = useState(null) // para guardar qué hacer tras calcular el efectivo
 
   console.log('TableDetail - Número de mesa:', tableNumber)
 
@@ -139,16 +142,41 @@ function TableDetail() {
     }
   }
 
-  const handleConfirmPayment = async (roundIds, method = 'efectivo', skipPrint = false) => {
+  const handleConfirmPayment = async (roundIds, method = 'efectivo', skipPrint = false, amountGiven = null) => {
     try {
-      const ticket = await generateTicket(tableNumber, roundIds, method, skipPrint)
+      const ticket = await generateTicket(tableNumber, roundIds, method, skipPrint, amountGiven)
       
       await loadTableRounds()
       setShowPaymentModal(false)
       setShowSelectivePayment(false)
+      
+      // Mostrar alerta flotante con el cambio si es efectivo
+      if (method === 'efectivo' && amountGiven !== null) {
+        const totalToPay = rounds.filter(r => roundIds.includes(r._id)).reduce((acc, round) => acc + calculateRoundTotal(round), 0);
+        const change = amountGiven - totalToPay;
+        if (change >= 0) {
+          // Usar una alerta nativa o un elemento visual para el cambio
+          alert(`PAGO COMPLETADO\n\nEntregado: $${amountGiven.toFixed(2)}\nCambio a devolver: $${change.toFixed(2)}`);
+        }
+      }
     } catch (err) {
       setError('Error al cobrar la mesa')
     }
+  }
+
+  const triggerCashPayment = (roundIds, isManual = false) => {
+    // Calcular el total de las rondas seleccionadas
+    const totalToPay = rounds.filter(r => roundIds.includes(r._id)).reduce((acc, round) => acc + calculateRoundTotal(round), 0);
+    setCashCalculatorAction({ roundIds, isManual, totalToPay });
+    setShowCashCalculator(true);
+  }
+
+  const handleCashCalculatorConfirm = (amountGiven) => {
+    if (cashCalculatorAction) {
+      handleConfirmPayment(cashCalculatorAction.roundIds, 'efectivo', cashCalculatorAction.isManual, amountGiven);
+    }
+    setShowCashCalculator(false);
+    setCashCalculatorAction(null);
   }
 
   const handleCancelPayment = () => setShowPaymentModal(false)
@@ -453,7 +481,7 @@ function TableDetail() {
                   onClick={() => {
                     const allRoundIds = rounds.map(r => r._id);
                     if(allRoundIds.length > 0) {
-                       handleConfirmPayment(allRoundIds, 'efectivo', true);
+                       triggerCashPayment(allRoundIds, true);
                     }
                   }}
                   className="px-6 py-3 bg-neutral-100 text-neutral-700 border border-neutral-300 rounded-lg hover:bg-neutral-200 transition-colors font-semibold shadow-sm"
@@ -498,7 +526,7 @@ function TableDetail() {
             <div className="flex justify-end gap-4">
               <button onClick={handleCancelPayment} className="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
               <button onClick={() => handleConfirmPayment(rounds.map(r=>r._id), 'tarjeta')} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Tarjeta</button>
-              <button onClick={() => handleConfirmPayment(rounds.map(r=>r._id), 'efectivo')} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Efectivo</button>
+              <button onClick={() => triggerCashPayment(rounds.map(r=>r._id))} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Efectivo</button>
             </div>
           </div>
         </div>
@@ -531,7 +559,10 @@ function TableDetail() {
               <div className="flex gap-2">
                 <button onClick={() => setShowSelectivePayment(false)} className="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
                 <button onClick={() => handleConfirmSelectivePayment('tarjeta')} disabled={!selectedProducts.length} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Tarjeta</button>
-                <button onClick={() => handleConfirmSelectivePayment('efectivo')} disabled={!selectedProducts.length} className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50">Efectivo</button>
+                <button onClick={() => {
+                  const roundIds = [...new Set(selectedProducts.map(p => p.roundId))];
+                  triggerCashPayment(roundIds);
+                }} disabled={!selectedProducts.length} className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50">Efectivo</button>
               </div>
             </div>
           </div>
@@ -620,6 +651,17 @@ function TableDetail() {
         <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium">
           {moveSuccess}
         </div>
+      )}
+      {/* Calculadora de Cambio en Efectivo */}
+      {showCashCalculator && cashCalculatorAction && (
+        <CashCalculatorModal
+          total={cashCalculatorAction.totalToPay}
+          onConfirm={handleCashCalculatorConfirm}
+          onCancel={() => {
+            setShowCashCalculator(false);
+            setCashCalculatorAction(null);
+          }}
+        />
       )}
     </div>
   )

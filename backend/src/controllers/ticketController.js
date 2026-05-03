@@ -7,7 +7,7 @@ import crypto from 'crypto';
 
 export const generateTicket = async (req, res) => {
   try {
-    const { tableNumber, roundIds, paymentMethod, skipPrint } = req.body;
+    const { tableNumber, roundIds, paymentMethod, skipPrint, amountGiven } = req.body;
     
     // Obtener las rondas no pagadas correspondientes a los roundIds dados
     const rounds = await Round.find({
@@ -104,7 +104,8 @@ export const generateTicket = async (req, res) => {
       total,
       paymentMethod,
       previousHash,
-      hash
+      hash,
+      amountGiven
     });
     await invoice.save();
 
@@ -116,7 +117,8 @@ export const generateTicket = async (req, res) => {
     // Emitir el Ticket Legal y abrir cajón a través del puente (si no es cobro manual sin caja)
     if (!skipPrint) {
       try {
-        const legalTicketText = PrinterService.generateLegalTicketString(invoice);
+        const invoiceDataWithGiven = { ...invoice.toObject(), amountGiven };
+        const legalTicketText = PrinterService.generateLegalTicketString(invoiceDataWithGiven);
         await PrinterService.printTicket(req.io, legalTicketText);
         if (paymentMethod === 'efectivo') {
           await PrinterService.openDrawer(req.io);

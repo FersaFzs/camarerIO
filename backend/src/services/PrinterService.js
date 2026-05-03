@@ -25,6 +25,18 @@ class PrinterService {
     ticket += `IVA (${invoiceData.taxRate}%): $${invoiceData.taxAmount.toFixed(2)}\n`;
     ticket += `TOTAL: $${Number(invoiceData.total).toFixed(2)}\n`;
     ticket += `Metodo: ${invoiceData.paymentMethod || 'Efectivo'}\n`;
+    
+    if (invoiceData.amountGiven && invoiceData.paymentMethod === 'efectivo') {
+      const amountGiven = Number(invoiceData.amountGiven);
+      const total = Number(invoiceData.total);
+      if (amountGiven > total) {
+        ticket += `Entregado: $${amountGiven.toFixed(2)}\n`;
+        ticket += `Cambio: $${(amountGiven - total).toFixed(2)}\n`;
+      } else if (amountGiven === total) {
+        ticket += `Entregado: $${amountGiven.toFixed(2)} (Importe exacto)\n`;
+      }
+    }
+
     ticket += '¡GRACIAS POR SU VISITA!\n';
 
     return ticket;

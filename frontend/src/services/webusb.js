@@ -107,6 +107,11 @@ export const printWebUSB = async (data) => {
      escpos += safeText;
      escpos += "\n\n\n\n\n\n\x1D\x56\x00"; // Cut paper
      escpos += "\x1B\x70\x00\x19\xFA"; // Open drawer
+  } else if (data.type === 'pre-ticket' && data.text) {
+     // Normalizar acentos
+     let safeText = data.text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+     escpos += safeText;
+     escpos += "\n\n\n\n\n\n\x1D\x56\x00"; // Cut paper only (no drawer)
   }
 
   escpos = escpos.replace(/[^\x00-\xFF]/g, "?");

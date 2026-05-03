@@ -24,8 +24,8 @@ export const printPreTicket = async (req, res) => {
 
     // Emitir vía Socket.IO
     if (req.io) {
-      req.io.emit('print-ticket', {
-        type: 'account',
+      req.io.emit('print-job', {
+        type: 'pre-ticket',
         text: ticketText
       });
     }
@@ -62,9 +62,9 @@ export const printPaymentTicket = async (req, res) => {
     ticketText += '¡GRACIAS POR SU VISITA!\n';
 
     if (req.io) {
-      req.io.emit('print-ticket', {
+      req.io.emit('print-job', {
         // Si el método es efectivo, envía tipo 'payment' para abrir el cajón
-        type: paymentMethod === 'efectivo' ? 'payment' : 'account',
+        type: paymentMethod === 'efectivo' ? 'payment' : 'ticket',
         text: ticketText
       });
     }
